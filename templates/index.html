@@ -1,445 +1,540 @@
 <!DOCTYPE html>
-<html lang="hu">
+<html lang="hu" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PyCleaner — Rendszertisztító</title>
-  <link rel="icon" type="image/x-icon" href="/favicon.ico">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>PyCleaner v3.0</title>
+  <link rel="icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png">
-  <link rel="apple-touch-icon" href="/static/icon-192.png">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --bg: #080a0e;
-      --surface: #0d1117;
-      --surface2: #131b24;
-      --border: #1a2535;
-      --border2: #243040;
-      --accent: #00c8f0;
-      --accent2: #ff6b35;
-      --accent3: #5eff6e;
-      --danger: #ff3e5e;
-      --warn: #ffb830;
-      --text: #c0d0e0;
-      --text2: #506070;
-      --glow: 0 0 24px rgba(0,200,240,0.2);
+    /* ─── THEME VARIABLES ───────────────────────────────────────────── */
+    [data-theme="dark"] {
+      --bg:      #080a0e;  --surface:  #0d1117;  --surface2: #131b24;
+      --border:  #1a2535;  --border2:  #243040;
+      --text:    #c0d0e0;  --text2:    #4a6070;   --text3:    #324050;
+      --accent:  #00c8f0;  --accent2:  #ff6b35;   --accent3:  #5eff6e;
+      --danger:  #ff3e5e;  --warn:     #ffb830;
+      --scrollbar: #1a2535;
+    }
+    [data-theme="light"] {
+      --bg:      #f0f4f8;  --surface:  #ffffff;   --surface2: #e8eef4;
+      --border:  #d0dce8;  --border2:  #b8cad8;
+      --text:    #1a2535;  --text2:    #6080a0;   --text3:    #90aabf;
+      --accent:  #0095c8;  --accent2:  #e05020;   --accent3:  #18a830;
+      --danger:  #d02040;  --warn:     #d08010;
+      --scrollbar: #d0dce8;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+    * { box-sizing:border-box; margin:0; padding:0; transition: background-color 0.3s, color 0.2s, border-color 0.2s; }
 
     body {
       font-family: 'IBM Plex Mono', monospace;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
+      background: var(--bg); color: var(--text);
+      min-height: 100vh; overflow-x: hidden;
     }
 
-    body::before {
-      content: '';
-      position: fixed; inset: 0;
-      background-image:
-        linear-gradient(rgba(0,200,240,0.025) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(0,200,240,0.025) 1px, transparent 1px);
-      background-size: 44px 44px;
-      pointer-events: none; z-index: 0;
+    [data-theme="dark"] body::before {
+      content:''; position:fixed; inset:0;
+      background-image: linear-gradient(rgba(0,200,240,.018) 1px,transparent 1px),
+                        linear-gradient(90deg,rgba(0,200,240,.018) 1px,transparent 1px);
+      background-size: 44px 44px; pointer-events:none; z-index:0;
     }
 
     .app {
-      position: relative; z-index: 1;
-      display: grid;
-      grid-template-columns: 240px 1fr;
-      grid-template-rows: 60px 1fr;
-      min-height: 100vh;
+      position:relative; z-index:1;
+      display:grid; grid-template-columns:220px 1fr; grid-template-rows:58px 1fr;
+      min-height:100vh;
     }
 
-    /* ---- HEADER ---- */
+    /* ─── HEADER ───────────────────────────────────────────────────── */
     header {
-      grid-column: 1/-1;
-      display: flex; align-items: center; gap: 14px;
-      padding: 0 20px;
-      background: rgba(8,10,14,0.97);
-      border-bottom: 1px solid var(--border);
-      backdrop-filter: blur(12px);
-      position: sticky; top: 0; z-index: 100;
+      grid-column:1/-1; display:flex; align-items:center; gap:12px;
+      padding:0 18px; background:rgba(8,10,14,.97);
+      border-bottom:1px solid var(--border);
+      backdrop-filter:blur(12px); position:sticky; top:0; z-index:200;
     }
+    [data-theme="light"] header { background:rgba(240,244,248,.97); }
 
     .logo {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 18px; font-weight: 900;
-      color: var(--accent); letter-spacing: 3px;
-      text-shadow: 0 0 20px rgba(0,200,240,0.4);
+      font-family:'Orbitron',sans-serif; font-size:17px; font-weight:900;
+      color:var(--accent); letter-spacing:3px;
+      text-shadow: 0 0 18px rgba(0,200,240,.35);
     }
-    .logo span { color: var(--accent2); }
+    .logo span { color:var(--accent2); }
 
-    .ver-badge {
-      font-size: 9px; background: rgba(0,200,240,0.12);
-      color: var(--accent); padding: 2px 7px;
-      border: 1px solid rgba(0,200,240,0.3); border-radius: 2px;
-      letter-spacing: 1.5px;
+    .ver { font-size:8px; background:rgba(0,200,240,.1); color:var(--accent);
+           padding:2px 6px; border:1px solid rgba(0,200,240,.25); border-radius:2px; letter-spacing:1.5px; }
+
+    .hdr-right { margin-left:auto; display:flex; align-items:center; gap:8px; }
+
+    .theme-btn {
+      background:var(--surface); border:1px solid var(--border); color:var(--text2);
+      padding:5px 10px; border-radius:3px; cursor:pointer; font-size:14px;
+      transition:all .15s;
     }
+    .theme-btn:hover { border-color:var(--accent); color:var(--accent); }
 
-    .header-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+    .profile-sel {
+      background:var(--surface); border:1px solid var(--border); color:var(--text);
+      font-family:'IBM Plex Mono',monospace; font-size:10px; padding:5px 8px;
+      border-radius:3px; cursor:pointer;
+    }
 
     .sys-badge {
-      font-size: 10px; color: var(--text2);
-      padding: 4px 10px; border: 1px solid var(--border);
-      border-radius: 2px; background: var(--surface);
+      font-size:10px; color:var(--text2); padding:4px 10px;
+      border:1px solid var(--border); border-radius:2px; background:var(--surface);
     }
 
-    /* ---- SIDEBAR ---- */
+    /* ─── SIDEBAR ──────────────────────────────────────────────────── */
     nav {
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      padding: 16px 0;
-      display: flex; flex-direction: column;
+      background:var(--surface); border-right:1px solid var(--border);
+      padding:14px 0; display:flex; flex-direction:column; overflow-y:auto;
     }
 
     .nav-sec {
-      padding: 10px 16px 4px;
-      font-size: 8px; letter-spacing: 2.5px;
-      color: var(--text2); text-transform: uppercase;
+      padding:10px 14px 4px; font-size:8px; letter-spacing:2.5px;
+      color:var(--text3); text-transform:uppercase;
     }
 
     .nav-item {
-      display: flex; align-items: center; gap: 10px;
-      padding: 10px 18px; cursor: pointer;
-      border-left: 3px solid transparent;
-      font-size: 11px; color: var(--text2);
-      transition: all 0.15s; user-select: none;
+      display:flex; align-items:center; gap:10px; padding:9px 16px;
+      cursor:pointer; border-left:3px solid transparent;
+      font-size:11px; color:var(--text2); transition:all .12s; user-select:none;
     }
+    .nav-item:hover { background:rgba(0,200,240,.05); color:var(--text); }
+    .nav-item.active { background:rgba(0,200,240,.07); border-left-color:var(--accent); color:var(--accent); }
 
-    .nav-item:hover { background: rgba(0,200,240,0.05); color: var(--text); }
-    .nav-item.active { background: rgba(0,200,240,0.07); border-left-color: var(--accent); color: var(--accent); }
-
-    .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+    .nav-icon { font-size:14px; width:17px; text-align:center; }
 
     .nav-pill {
-      margin-left: auto; font-size: 9px;
-      padding: 1px 6px; border-radius: 2px;
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--text2); white-space: nowrap;
+      margin-left:auto; font-size:8px; padding:1px 5px; border-radius:2px;
+      background:var(--surface2); border:1px solid var(--border2); color:var(--text2); white-space:nowrap;
     }
-    .nav-pill.warn { border-color: var(--warn); color: var(--warn); }
-    .nav-pill.ok { border-color: var(--accent3); color: var(--accent3); }
+    .nav-pill.warn { border-color:var(--warn); color:var(--warn); }
+    .nav-pill.ok   { border-color:var(--accent3); color:var(--accent3); }
+    .nav-pill.hot  { border-color:var(--danger); color:var(--danger); }
 
-    .nav-div { height: 1px; background: var(--border); margin: 8px 14px; }
+    .nav-div { height:1px; background:var(--border); margin:7px 12px; }
 
-    /* ---- MAIN ---- */
-    main {
-      padding: 24px;
-      overflow-y: auto;
-      background: var(--bg);
-    }
+    /* ─── MAIN ─────────────────────────────────────────────────────── */
+    main { padding:22px; overflow-y:auto; background:var(--bg); }
 
-    .page { display: none; animation: fadeIn 0.2s; }
-    .page.active { display: block; }
-
+    .page { display:none; animation:fadeIn .18s; }
+    .page.active { display:block; }
     @keyframes fadeIn { from{opacity:0;transform:translateY(4px)} to{opacity:1;transform:none} }
 
-    .page-title {
-      font-family: 'Orbitron', sans-serif;
-      font-size: 20px; font-weight: 700;
-      color: var(--text); margin-bottom: 4px;
-    }
+    .page-title { font-family:'Orbitron',sans-serif; font-size:18px; font-weight:700; color:var(--text); margin-bottom:3px; }
+    .page-sub   { font-size:10px; color:var(--text2); margin-bottom:20px; letter-spacing:.8px; }
 
-    .page-sub { font-size: 10px; color: var(--text2); margin-bottom: 22px; letter-spacing: 1px; }
-
-    /* ---- CARDS ---- */
-    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; margin-bottom: 20px; }
-    .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 14px; }
+    /* ─── GRID / CARD ───────────────────────────────────────────────── */
+    .grid-3 { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:16px; }
+    .grid-2 { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
 
     .card {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; padding: 18px;
-      transition: border-color 0.2s;
+      background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:16px;
+      transition:border-color .2s;
     }
-    .card:hover { border-color: var(--border2); }
+    .card:hover { border-color:var(--border2); }
+    .card-hdr { display:flex; align-items:center; justify-content:space-between; margin-bottom:9px; }
+    .card-lbl { font-size:9px; letter-spacing:1.5px; color:var(--text2); text-transform:uppercase; }
+    .card-ico { font-size:17px; }
+    .stat { font-family:'Orbitron',sans-serif; font-size:20px; font-weight:700; color:var(--accent); }
+    .stat-sub { font-size:9px; color:var(--text2); margin-top:3px; }
 
-    .card-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
-    .card-lbl { font-size: 10px; letter-spacing: 1.5px; color: var(--text2); text-transform: uppercase; }
-    .card-ico { font-size: 18px; }
+    /* ─── CLEANER ITEMS ─────────────────────────────────────────────── */
+    .c-items { display:flex; flex-direction:column; gap:8px; margin-bottom:14px; }
 
-    .stat { font-family: 'Orbitron', sans-serif; font-size: 22px; font-weight: 700; color: var(--accent); }
-    .stat-sub { font-size: 10px; color: var(--text2); margin-top: 3px; }
-
-    /* ---- CLEANER ITEMS ---- */
-    .cleaner-items { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
-
-    .cleaner-item {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; padding: 14px 18px;
-      display: flex; align-items: center; gap: 14px;
-      cursor: pointer; transition: all 0.15s;
+    .c-item {
+      background:var(--surface); border:1px solid var(--border); border-radius:4px;
+      padding:12px 16px; display:flex; align-items:center; gap:12px;
+      cursor:pointer; transition:all .12s;
     }
-    .cleaner-item:hover { border-color: var(--border2); background: var(--surface2); }
-    .cleaner-item.selected { border-color: var(--accent); background: rgba(0,200,240,0.05); }
+    .c-item:hover    { border-color:var(--border2); background:var(--surface2); }
+    .c-item.selected { border-color:var(--accent); background:rgba(0,200,240,.05); }
 
     .chk {
-      width: 16px; height: 16px; border: 2px solid var(--border2);
-      border-radius: 2px; display: flex; align-items: center;
-      justify-content: center; flex-shrink: 0; font-size: 10px;
-      transition: all 0.15s;
+      width:15px; height:15px; border:2px solid var(--border2); border-radius:2px;
+      display:flex; align-items:center; justify-content:center; flex-shrink:0;
+      font-size:9px; transition:all .12s;
     }
-    .cleaner-item.selected .chk { border-color: var(--accent); background: var(--accent); color: #000; }
+    .c-item.selected .chk { border-color:var(--accent); background:var(--accent); color:#000; }
 
-    .ci-info { flex: 1; }
-    .ci-name { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 2px; }
-    .ci-desc { font-size: 10px; color: var(--text2); }
+    .ci-info { flex:1; }
+    .ci-name { font-size:11px; font-weight:600; color:var(--text); margin-bottom:2px; }
+    .ci-desc { font-size:9px; color:var(--text2); }
+    .ci-size { text-align:right; flex-shrink:0; min-width:70px; }
+    .ci-val  { font-family:'Orbitron',sans-serif; font-size:12px; color:var(--accent2); }
+    .ci-fc   { font-size:9px; color:var(--text2); margin-top:1px; }
+    .ci-scan { font-size:9px; color:var(--text2); animation:blink 1s infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-    .ci-size { text-align: right; flex-shrink: 0; min-width: 70px; }
-    .ci-val { font-family: 'Orbitron', sans-serif; font-size: 13px; color: var(--accent2); }
-    .ci-files { font-size: 10px; color: var(--text2); margin-top: 2px; }
-    .ci-scanning { font-size: 10px; color: var(--text2); animation: blink 1s infinite; }
-
-    @keyframes blink { 0%,100%{opacity:1}50%{opacity:0.3} }
-
-    /* ---- ACTION BAR ---- */
+    /* ─── ACTION BAR ────────────────────────────────────────────────── */
     .action-bar {
-      display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
-      padding: 16px 18px;
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; margin-bottom: 14px;
+      display:flex; flex-wrap:wrap; align-items:center; gap:8px;
+      padding:14px 16px; background:var(--surface);
+      border:1px solid var(--border); border-radius:4px; margin-bottom:12px;
     }
-
-    .age-filter { display: flex; align-items: center; gap: 8px; margin-left: 4px; }
-    .age-filter label { font-size: 10px; color: var(--text2); }
-    .age-select {
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--text); font-family: 'IBM Plex Mono', monospace;
-      font-size: 10px; padding: 4px 8px; border-radius: 2px; cursor: pointer;
+    .age-filter { display:flex; align-items:center; gap:6px; }
+    .age-filter label { font-size:9px; color:var(--text2); }
+    select.styled, input.styled {
+      background:var(--surface2); border:1px solid var(--border2); color:var(--text);
+      font-family:'IBM Plex Mono',monospace; font-size:10px; padding:5px 8px;
+      border-radius:2px; cursor:pointer;
     }
+    select.styled:focus, input.styled:focus { outline:none; border-color:var(--accent); }
+    .action-total { margin-left:auto; text-align:right; }
+    .total-lbl { font-size:8px; color:var(--text2); letter-spacing:1px; text-transform:uppercase; }
+    .total-val { font-family:'Orbitron',sans-serif; font-size:15px; color:var(--accent2); }
 
-    .action-total { margin-left: auto; text-align: right; }
-    .total-lbl { font-size: 9px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
-    .total-val { font-family: 'Orbitron', sans-serif; font-size: 16px; color: var(--accent2); }
-
-    /* ---- BUTTONS ---- */
+    /* ─── BUTTONS ───────────────────────────────────────────────────── */
     .btn {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 8px 18px; border: none; border-radius: 3px;
-      font-family: 'IBM Plex Mono', monospace; font-size: 11px;
-      font-weight: 600; letter-spacing: 1px; cursor: pointer;
-      transition: all 0.15s; text-transform: uppercase; white-space: nowrap;
+      display:inline-flex; align-items:center; gap:5px;
+      padding:7px 15px; border:none; border-radius:3px;
+      font-family:'IBM Plex Mono',monospace; font-size:10px; font-weight:600;
+      letter-spacing:.8px; cursor:pointer; transition:all .12s;
+      text-transform:uppercase; white-space:nowrap; text-decoration:none;
     }
-    .btn-primary { background: var(--accent); color: #000; }
-    .btn-primary:hover { box-shadow: 0 0 18px rgba(0,200,240,0.4); filter: brightness(1.1); }
-    .btn-danger { background: var(--danger); color: #fff; }
-    .btn-danger:hover { box-shadow: 0 0 18px rgba(255,62,94,0.4); filter: brightness(1.1); }
-    .btn-sec { background: transparent; color: var(--text2); border: 1px solid var(--border2); }
-    .btn-sec:hover { border-color: var(--text2); color: var(--text); }
-    .btn-warn { background: var(--warn); color: #000; }
-    .btn-warn:hover { filter: brightness(1.1); }
-    .btn:disabled { opacity: 0.35; cursor: not-allowed; filter: none !important; box-shadow: none !important; }
+    .btn-p { background:var(--accent);  color:#000; }
+    .btn-p:hover { filter:brightness(1.1); box-shadow:0 0 16px rgba(0,200,240,.35); }
+    .btn-d { background:var(--danger); color:#fff; }
+    .btn-d:hover { filter:brightness(1.1); box-shadow:0 0 16px rgba(255,62,94,.35); }
+    .btn-w { background:var(--warn); color:#000; }
+    .btn-w:hover { filter:brightness(1.1); }
+    .btn-s { background:transparent; color:var(--text2); border:1px solid var(--border2); }
+    .btn-s:hover { border-color:var(--text2); color:var(--text); }
+    .btn-g { background:var(--accent3); color:#000; }
+    .btn-g:hover { filter:brightness(1.1); }
+    .btn:disabled { opacity:.35; cursor:not-allowed; filter:none!important; box-shadow:none!important; }
+    .btn-sm { padding:5px 10px; font-size:9px; }
 
-    /* ---- PROGRESS ---- */
-    .progress-wrap { display: none; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; padding: 16px; margin-bottom: 14px; }
-    .progress-wrap.visible { display: block; }
-    .prog-lbl { font-size: 11px; color: var(--text2); margin-bottom: 8px; }
-    .prog-bg { height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
-    .prog-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 2px; transition: width 0.3s; }
-    .prog-fill.indeterminate { width: 35%; animation: slide 1s linear infinite; }
-    @keyframes slide { 0%{transform:translateX(-120%)}100%{transform:translateX(380%)} }
+    /* ─── PROGRESS ──────────────────────────────────────────────────── */
+    .prog-wrap { display:none; background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:14px; margin-bottom:12px; }
+    .prog-wrap.visible { display:block; }
+    .prog-lbl { font-size:10px; color:var(--text2); margin-bottom:7px; }
+    .prog-bg  { height:3px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .prog-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:2px; transition:width .3s; }
+    .prog-fill.ind { width:35%; animation:slide 1s linear infinite; }
+    @keyframes slide { 0%{transform:translateX(-120%)} 100%{transform:translateX(380%)} }
 
-    /* ---- RESULT GRID ---- */
-    .result-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 14px; }
-    .result-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 4px; padding: 12px; text-align: center; }
-    .result-num { font-family: 'Orbitron', sans-serif; font-size: 20px; font-weight: 700; }
-    .result-lbl { font-size: 9px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-top: 3px; }
-    .result-details { margin-top: 12px; font-size: 10px; color: var(--text2); line-height: 1.8; }
+    /* ─── CLEAN ANIMATION ───────────────────────────────────────────── */
+    #cleanAnim {
+      display:none; position:fixed; inset:0; z-index:9999;
+      background:rgba(8,10,14,.92); align-items:center; justify-content:center;
+      flex-direction:column; gap:20px;
+    }
+    #cleanAnim.visible { display:flex; }
+    .broom-wrap { font-size:64px; animation:sweep 0.5s ease-in-out infinite alternate; }
+    @keyframes sweep { from{transform:rotate(-20deg) translateX(-8px)} to{transform:rotate(20deg) translateX(8px)} }
+    .anim-text { font-family:'Orbitron',sans-serif; color:var(--accent); font-size:14px; letter-spacing:3px; }
+    .particles { position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+    .particle {
+      position:absolute; width:4px; height:4px; border-radius:50%;
+      animation:fall 1.5s linear infinite;
+    }
+    @keyframes fall { 0%{opacity:1;transform:translateY(-20px)} 100%{opacity:0;transform:translateY(100vh)} }
 
-    /* ---- LOG ---- */
+    /* ─── RESULTS ───────────────────────────────────────────────────── */
+    .result-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+    .result-card { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:11px; text-align:center; }
+    .result-num  { font-family:'Orbitron',sans-serif; font-size:18px; font-weight:700; }
+    .result-lbl  { font-size:8px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
+    .result-det  { margin-top:10px; font-size:9px; color:var(--text2); line-height:2; }
+
+    /* ─── TOAST ─────────────────────────────────────────────────────── */
+    #toastContainer { position:fixed; top:70px; right:18px; z-index:1000; display:flex; flex-direction:column; gap:8px; }
+    .toast {
+      background:var(--surface); border:1px solid var(--border); border-radius:4px;
+      padding:10px 16px; font-size:11px; min-width:260px; max-width:340px;
+      animation:toastIn .3s; box-shadow:0 4px 20px rgba(0,0,0,.4);
+    }
+    @keyframes toastIn { from{opacity:0;transform:translateX(20px)} to{opacity:1;transform:none} }
+    .toast.ok   { border-left:3px solid var(--accent3); }
+    .toast.err  { border-left:3px solid var(--danger);  }
+    .toast.info { border-left:3px solid var(--accent);  }
+    .toast.warn { border-left:3px solid var(--warn);    }
+
+    /* ─── LOG ───────────────────────────────────────────────────────── */
     .log-box {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; padding: 12px;
-      font-size: 10px; max-height: 160px; overflow-y: auto; line-height: 1.9;
+      background:var(--surface); border:1px solid var(--border); border-radius:4px;
+      padding:10px 12px; font-size:9px; max-height:140px; overflow-y:auto; line-height:2;
     }
-    .log-line { color: var(--text2); }
-    .log-line.ok { color: var(--accent3); }
-    .log-line.err { color: var(--danger); }
-    .log-line.info { color: var(--accent); }
-    .log-line.warn { color: var(--warn); }
+    .ll      { color:var(--text2); }
+    .ll.ok   { color:var(--accent3); }
+    .ll.err  { color:var(--danger); }
+    .ll.info { color:var(--accent); }
+    .ll.warn { color:var(--warn); }
 
-    /* ---- HISTORY ---- */
-    .history-item {
-      background: var(--surface); border: 1px solid var(--border);
-      border-radius: 4px; padding: 14px 18px; margin-bottom: 10px;
-      display: grid; grid-template-columns: 1fr auto auto; gap: 12px; align-items: center;
+    /* ─── MONITOR ───────────────────────────────────────────────────── */
+    .monitor-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-bottom:14px; }
+    .gauge-card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:14px; text-align:center; }
+    .gauge-val { font-family:'Orbitron',sans-serif; font-size:24px; font-weight:700; }
+    .gauge-lbl { font-size:8px; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-top:3px; }
+    .gauge-sub { font-size:9px; color:var(--text2); margin-top:4px; }
+
+    .proc-table { width:100%; border-collapse:collapse; font-size:10px; }
+    .proc-table th { background:var(--surface2); color:var(--text2); padding:7px 10px; text-align:left; font-size:8px; text-transform:uppercase; letter-spacing:1px; border-bottom:1px solid var(--border); }
+    .proc-table td { padding:6px 10px; border-bottom:1px solid var(--border); }
+    .proc-table tr:hover td { background:var(--surface2); }
+
+    .mini-bar { height:4px; background:var(--border); border-radius:2px; overflow:hidden; margin-top:3px; }
+    .mini-bar-fill { height:100%; border-radius:2px; transition:width .5s; }
+
+    /* ─── DUPLIKÁLT ─────────────────────────────────────────────────── */
+    .dup-group { background:var(--surface); border:1px solid var(--border); border-radius:4px; margin-bottom:10px; }
+    .dup-header { display:flex; align-items:center; gap:10px; padding:11px 14px; cursor:pointer; }
+    .dup-header:hover { background:var(--surface2); }
+    .dup-hash { font-size:9px; color:var(--text2); font-family:'IBM Plex Mono',monospace; }
+    .dup-waste { margin-left:auto; font-family:'Orbitron',sans-serif; font-size:12px; color:var(--warn); }
+    .dup-files { padding:0 14px 12px; }
+    .dup-file { display:flex; align-items:center; gap:10px; padding:6px 0; border-top:1px solid var(--border); font-size:10px; }
+    .dup-path { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text2); }
+    .dup-sz { color:var(--accent2); font-weight:600; flex-shrink:0; }
+
+    /* ─── REGISTRY ──────────────────────────────────────────────────── */
+    .reg-item { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:12px 14px; margin-bottom:8px; display:flex; align-items:center; gap:12px; }
+    .reg-ico { font-size:18px; flex-shrink:0; }
+    .reg-info { flex:1; }
+    .reg-desc { font-size:11px; color:var(--text); margin-bottom:2px; }
+    .reg-path { font-size:9px; color:var(--text2); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .reg-type { font-size:8px; padding:1px 5px; border-radius:2px; border:1px solid; margin-left:auto; flex-shrink:0; }
+
+    /* ─── SCHEDULE ──────────────────────────────────────────────────── */
+    .sched-card { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:18px; }
+    .sched-row  { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+    .sched-row:last-child { border-bottom:none; }
+    .sched-lbl  { font-size:11px; color:var(--text); flex:1; }
+    .sched-sub  { font-size:9px; color:var(--text2); margin-top:2px; }
+
+    /* ─── PROFILE / SETTINGS ────────────────────────────────────────── */
+    .settings-section { margin-bottom:20px; }
+    .settings-title { font-size:10px; letter-spacing:2px; text-transform:uppercase; color:var(--text2); margin-bottom:10px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+    .form-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+    .form-lbl { font-size:10px; color:var(--text2); width:160px; flex-shrink:0; }
+    input[type="text"].styled, input[type="password"].styled, input[type="number"].styled {
+      flex:1;
     }
-    .hist-ts { font-size: 10px; color: var(--text2); margin-bottom: 4px; }
-    .hist-cats { font-size: 11px; color: var(--text); }
-    .hist-freed { font-family: 'Orbitron', sans-serif; font-size: 14px; color: var(--accent3); }
-    .hist-files { font-size: 10px; color: var(--text2); }
+    .toggle-wrap { display:flex; align-items:center; gap:8px; }
+    .toggle { width:36px; height:20px; background:var(--border2); border-radius:10px; cursor:pointer; position:relative; transition:background .2s; flex-shrink:0; }
+    .toggle.on { background:var(--accent); }
+    .toggle::after { content:''; position:absolute; top:3px; left:3px; width:14px; height:14px; background:#fff; border-radius:50%; transition:transform .2s; }
+    .toggle.on::after { transform:translateX(16px); }
+    .toggle-lbl { font-size:10px; color:var(--text2); }
 
-    /* ---- DISK OVERVIEW ---- */
-    .disk-overview {
-      display: flex; gap: 24px; align-items: center;
-      padding: 18px; background: var(--surface);
-      border: 1px solid var(--border); border-radius: 4px; margin-bottom: 18px;
-    }
-    canvas#diskChart { width: 110px !important; height: 110px !important; }
-    .disk-legend { display: flex; flex-direction: column; gap: 9px; flex: 1; }
-    .leg-row { display: flex; align-items: center; gap: 9px; font-size: 11px; }
-    .leg-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .leg-lbl { color: var(--text2); flex: 1; }
-    .leg-val { color: var(--text); font-weight: 600; }
+    /* ─── DISK OVERVIEW / DONUT ─────────────────────────────────────── */
+    .disk-overview { display:flex; gap:22px; align-items:center; padding:16px; background:var(--surface); border:1px solid var(--border); border-radius:4px; margin-bottom:16px; }
+    canvas#diskChart { width:100px!important; height:100px!important; }
+    .disk-legend { display:flex; flex-direction:column; gap:8px; flex:1; }
+    .leg-row { display:flex; align-items:center; gap:8px; font-size:11px; }
+    .leg-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+    .leg-lbl { color:var(--text2); flex:1; }
+    .leg-val { color:var(--text); font-weight:600; }
 
-    /* ---- DISK BARS ---- */
-    .disk-item {
-      display: grid; grid-template-columns: 130px 1fr 80px;
-      align-items: center; gap: 12px;
-      padding: 9px 0; border-bottom: 1px solid rgba(26,37,53,0.6);
-    }
-    .disk-item:last-child { border-bottom: none; }
-    .disk-name { font-size: 11px; color: var(--text); }
-    .disk-path { font-size: 9px; color: var(--text2); margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .disk-bar-bg { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
-    .disk-bar-fill { height: 100%; background: linear-gradient(90deg, var(--accent), var(--accent2)); border-radius: 3px; transition: width 0.7s; }
-    .disk-sz { text-align: right; font-size: 10px; color: var(--accent2); font-weight: 600; }
+    /* ─── DISK BARS ─────────────────────────────────────────────────── */
+    .disk-item { display:grid; grid-template-columns:120px 1fr 80px; align-items:center; gap:10px; padding:8px 0; border-bottom:1px solid rgba(26,37,53,.5); }
+    .disk-item:last-child { border-bottom:none; }
+    .disk-name { font-size:10px; color:var(--text); }
+    .disk-path { font-size:8px; color:var(--text2); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .disk-bar-bg { height:4px; background:var(--border); border-radius:2px; overflow:hidden; }
+    .disk-bar-fill { height:100%; background:linear-gradient(90deg,var(--accent),var(--accent2)); border-radius:2px; transition:width .7s; }
+    .disk-sz { text-align:right; font-size:9px; color:var(--accent2); font-weight:600; }
 
-    /* ---- LARGE FILES ---- */
-    .lf-controls { display: flex; gap: 10px; align-items: center; margin-bottom: 16px; flex-wrap: wrap; }
-    .lf-input {
-      background: var(--surface2); border: 1px solid var(--border2);
-      color: var(--text); font-family: 'IBM Plex Mono', monospace;
-      font-size: 11px; padding: 7px 12px; border-radius: 3px; flex: 1; min-width: 200px;
-    }
-    .lf-input:focus { outline: none; border-color: var(--accent); }
-    .lf-row {
-      display: grid; grid-template-columns: 1fr 100px 50px;
-      align-items: center; gap: 12px;
-      padding: 9px 14px; border-bottom: 1px solid var(--border);
-      font-size: 11px;
-    }
-    .lf-row:last-child { border-bottom: none; }
-    .lf-row:hover { background: var(--surface2); }
-    .lf-name { color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lf-path { font-size: 9px; color: var(--text2); margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .lf-size { text-align: right; font-family: 'Orbitron', sans-serif; font-size: 12px; color: var(--accent2); }
-    .ext-badge { font-size: 9px; padding: 1px 5px; border-radius: 2px; text-align: center; background: var(--surface2); border: 1px solid var(--border2); color: var(--text2); text-transform: uppercase; }
+    /* ─── BACKUP LIST ───────────────────────────────────────────────── */
+    .bk-row { display:flex; align-items:center; gap:10px; padding:9px 14px; border-bottom:1px solid var(--border); font-size:10px; }
+    .bk-row:last-child { border-bottom:none; }
+    .bk-name { flex:1; color:var(--text); }
+    .bk-date { color:var(--text2); }
+    .bk-sz   { color:var(--accent2); font-weight:600; }
 
-    /* Scrollbar */
-    ::-webkit-scrollbar { width: 5px; }
-    ::-webkit-scrollbar-track { background: var(--surface); }
-    ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+    /* ─── HISTORY ───────────────────────────────────────────────────── */
+    .hist-item { background:var(--surface); border:1px solid var(--border); border-radius:4px; padding:12px 16px; margin-bottom:8px; display:grid; grid-template-columns:1fr auto auto; gap:10px; align-items:center; }
+    .hist-ts   { font-size:9px; color:var(--text2); margin-bottom:3px; }
+    .hist-cats { font-size:11px; color:var(--text); }
+    .hist-freed { font-family:'Orbitron',sans-serif; font-size:13px; color:var(--accent3); }
+    .hist-files { font-size:9px; color:var(--text2); }
 
-    /* Responsive */
-    @media (max-width: 860px) {
-      .app { grid-template-columns: 1fr; }
-      nav { flex-direction: row; overflow-x: auto; border-right: none; border-bottom: 1px solid var(--border); padding: 0; }
-      .nav-item { border-left: none; border-bottom: 3px solid transparent; padding: 12px 12px; white-space: nowrap; }
-      .nav-item.active { border-left-color: transparent; border-bottom-color: var(--accent); }
-      .nav-sec, .nav-div, .nav-pill { display: none; }
-      .grid-3 { grid-template-columns: 1fr 1fr; }
+    /* ─── LARGE FILES ───────────────────────────────────────────────── */
+    .lf-controls { display:flex; gap:8px; align-items:center; margin-bottom:14px; flex-wrap:wrap; }
+    .lf-input { background:var(--surface2); border:1px solid var(--border2); color:var(--text); font-family:'IBM Plex Mono',monospace; font-size:10px; padding:7px 10px; border-radius:3px; flex:1; min-width:180px; }
+    .lf-input:focus { outline:none; border-color:var(--accent); }
+    .lf-row { display:grid; grid-template-columns:1fr 90px 50px 28px; align-items:center; gap:10px; padding:7px 12px; border-bottom:1px solid var(--border); font-size:10px; }
+    .lf-row:last-child { border-bottom:none; }
+    .lf-row:hover { background:var(--surface2); }
+    .lf-name { color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .lf-fp   { font-size:8px; color:var(--text2); margin-top:1px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .lf-sz   { text-align:right; font-family:'Orbitron',sans-serif; font-size:11px; color:var(--accent2); }
+    .ext-badge { font-size:8px; padding:1px 4px; border-radius:2px; text-align:center; background:var(--surface2); border:1px solid var(--border2); color:var(--text2); text-transform:uppercase; }
+    .del-btn { background:none; border:none; cursor:pointer; font-size:12px; opacity:.5; transition:opacity .15s; }
+    .del-btn:hover { opacity:1; }
+
+    /* ─── CUSTOM DIRS ────────────────────────────────────────────────── */
+    .dir-tag { display:inline-flex; align-items:center; gap:6px; background:var(--surface2); border:1px solid var(--border2); border-radius:3px; padding:4px 8px; font-size:10px; margin:3px; }
+    .dir-tag .rm { cursor:pointer; color:var(--danger); font-size:11px; }
+
+    /* ─── SCROLLBAR ─────────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width:5px; }
+    ::-webkit-scrollbar-track { background:var(--surface); }
+    ::-webkit-scrollbar-thumb { background:var(--scrollbar); border-radius:3px; }
+
+    /* ─── PASSWORD MODAL ─────────────────────────────────────────────── */
+    .modal-overlay { display:none; position:fixed; inset:0; z-index:500; background:rgba(0,0,0,.6); align-items:center; justify-content:center; }
+    .modal-overlay.visible { display:flex; }
+    .modal { background:var(--surface); border:1px solid var(--border); border-radius:6px; padding:24px; min-width:320px; max-width:400px; }
+    .modal-title { font-family:'Orbitron',sans-serif; font-size:14px; color:var(--accent); margin-bottom:16px; }
+
+    /* ─── RESPONSIVE ─────────────────────────────────────────────────── */
+    @media(max-width:860px) {
+      .app { grid-template-columns:1fr; }
+      nav { flex-direction:row; overflow-x:auto; border-right:none; border-bottom:1px solid var(--border); padding:0; }
+      .nav-item { border-left:none; border-bottom:3px solid transparent; padding:10px 10px; white-space:nowrap; }
+      .nav-item.active { border-left-color:transparent; border-bottom-color:var(--accent); }
+      .nav-sec, .nav-div, .nav-pill { display:none; }
+      .grid-3 { grid-template-columns:1fr 1fr; }
+      .monitor-grid { grid-template-columns:1fr 1fr; }
     }
   </style>
 </head>
 <body>
+
+<!-- CLEAN ANIMATION OVERLAY -->
+<div id="cleanAnim">
+  <div class="particles" id="particles"></div>
+  <div class="broom-wrap">🧹</div>
+  <div class="anim-text">TAKARÍTÁS FOLYAMATBAN...</div>
+  <div id="animProgress" style="font-size:11px;color:var(--text2)"></div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div id="toastContainer"></div>
+
+<!-- PASSWORD MODAL -->
+<div class="modal-overlay" id="pwModal">
+  <div class="modal">
+    <div class="modal-title">🔒 Jelszó szükséges</div>
+    <p style="font-size:11px;color:var(--text2);margin-bottom:14px">Ez a profil jelszóval védett.</p>
+    <input type="password" id="pwInput" class="styled" placeholder="Jelszó..." style="width:100%;margin-bottom:14px">
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-p" onclick="submitPassword()">Belépés</button>
+      <button class="btn btn-s" onclick="closePwModal()">Mégse</button>
+    </div>
+  </div>
+</div>
+
 <div class="app">
 
   <!-- HEADER -->
   <header>
     <div class="logo">Py<span>Cleaner</span></div>
-    <div class="ver-badge">v2.0</div>
-    <div class="header-right">
+    <div class="ver">v3.0</div>
+    <div class="hdr-right">
+      <select class="profile-sel" id="profileSel" onchange="switchProfile(this.value)"></select>
+      <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Téma váltása">🌙</button>
       <div class="sys-badge" id="sysBadge">Betöltés...</div>
     </div>
   </header>
 
   <!-- SIDEBAR -->
   <nav>
-    <div class="nav-sec">Eszközök</div>
+    <div class="nav-sec">Tisztítás</div>
     <div class="nav-item active" data-page="cleaner">
-      <span class="nav-icon">🧹</span> Tisztító
+      <span class="nav-icon">🧹</span>Tisztító
       <span class="nav-pill warn" id="navClean">—</span>
     </div>
+    <div class="nav-item" data-page="monitor">
+      <span class="nav-icon">📡</span>Élő Monitor
+      <span class="nav-pill" id="navCPU">—</span>
+    </div>
+    <div class="nav-div"></div>
+    <div class="nav-sec">Elemzés</div>
     <div class="nav-item" data-page="analyzer">
-      <span class="nav-icon">📊</span> Lemez elemző
+      <span class="nav-icon">📊</span>Lemez elemző
     </div>
     <div class="nav-item" data-page="largefiles">
-      <span class="nav-icon">🔍</span> Nagy fájlok
+      <span class="nav-icon">🔍</span>Nagy fájlok
+    </div>
+    <div class="nav-item" data-page="duplicates">
+      <span class="nav-icon">👥</span>Duplikátumok
+      <span class="nav-pill warn" id="navDup">—</span>
+    </div>
+    <div class="nav-item" data-page="registry">
+      <span class="nav-icon">🗝️</span>Registry
+      <span class="nav-pill hot" id="navReg">—</span>
     </div>
     <div class="nav-div"></div>
     <div class="nav-sec">Rendszer</div>
     <div class="nav-item" data-page="system">
-      <span class="nav-icon">🖥️</span> Rendszerinfo
+      <span class="nav-icon">🖥️</span>Rendszerinfo
       <span class="nav-pill ok" id="navDisk">—</span>
     </div>
+    <div class="nav-item" data-page="schedule">
+      <span class="nav-icon">⏰</span>Ütemező
+      <span class="nav-pill ok" id="navSched">OFF</span>
+    </div>
+    <div class="nav-item" data-page="backups">
+      <span class="nav-icon">💾</span>Biztonsági másolatok
+      <span class="nav-pill" id="navBk">0</span>
+    </div>
     <div class="nav-item" data-page="history">
-      <span class="nav-icon">📜</span> Előzmények
+      <span class="nav-icon">📜</span>Előzmények
       <span class="nav-pill" id="navHist">0</span>
     </div>
+    <div class="nav-div"></div>
+    <div class="nav-item" data-page="settings">
+      <span class="nav-icon">⚙️</span>Beállítások
+    </div>
     <div class="nav-item" data-page="log">
-      <span class="nav-icon">📋</span> Napló
+      <span class="nav-icon">📋</span>Napló
     </div>
   </nav>
 
-  <!-- MAIN -->
   <main>
 
-    <!-- ===== CLEANER ===== -->
+    <!-- ══════════ CLEANER ══════════ -->
     <div class="page active" id="page-cleaner">
       <div class="page-title">Rendszertisztító</div>
-      <div class="page-sub">Jelöld ki a tisztítandó elemeket, majd futtasd a beolvasást</div>
+      <div class="page-sub">Jelöld ki a tisztítandó elemeket → Beolvasás → Tisztítás</div>
 
-      <div class="cleaner-items" id="cleanerItems">
-        <div class="cleaner-item selected" data-category="temp">
+      <div class="c-items" id="cleanerItems">
+        <div class="c-item selected" data-category="temp">
           <div class="chk">✓</div>
-          <div class="ci-info">
-            <div class="ci-name">🗂️ Ideiglenes fájlok</div>
-            <div class="ci-desc">%TEMP%, %TMP%, %WINDIR%\Temp, /tmp mappák tartalma</div>
-          </div>
-          <div class="ci-size"><div class="ci-val" id="sz-temp">—</div><div class="ci-files" id="fc-temp">—</div></div>
+          <div class="ci-info"><div class="ci-name">🗂️ Ideiglenes fájlok</div><div class="ci-desc">%TEMP%, %TMP%, %WINDIR%\Temp, /tmp mappák</div></div>
+          <div class="ci-size"><div class="ci-val" id="sz-temp">—</div><div class="ci-fc" id="fc-temp"></div></div>
         </div>
-        <div class="cleaner-item selected" data-category="browser">
+        <div class="c-item selected" data-category="browser">
           <div class="chk">✓</div>
-          <div class="ci-info">
-            <div class="ci-name">🌐 Böngésző gyorsítótár</div>
-            <div class="ci-desc">Chrome, Firefox, Edge, Brave cache és kód cache</div>
-          </div>
-          <div class="ci-size"><div class="ci-val" id="sz-browser">—</div><div class="ci-files" id="fc-browser">—</div></div>
+          <div class="ci-info"><div class="ci-name">🌐 Böngésző gyorsítótár</div><div class="ci-desc">Chrome, Edge, Firefox, Brave – cache, GPUCache, Code Cache</div></div>
+          <div class="ci-size"><div class="ci-val" id="sz-browser">—</div><div class="ci-fc" id="fc-browser"></div></div>
         </div>
-        <div class="cleaner-item selected" data-category="logs">
+        <div class="c-item selected" data-category="logs">
           <div class="chk">✓</div>
-          <div class="ci-info">
-            <div class="ci-name">📄 Log fájlok</div>
-            <div class="ci-desc">Rendszer és alkalmazás napló fájlok (.log, .bak, .old, .tmp)</div>
-          </div>
-          <div class="ci-size"><div class="ci-val" id="sz-logs">—</div><div class="ci-files" id="fc-logs">—</div></div>
+          <div class="ci-info"><div class="ci-name">📄 Log fájlok</div><div class="ci-desc">Rendszer- és app-naplók (.log, .bak, .old, .tmp)</div></div>
+          <div class="ci-size"><div class="ci-val" id="sz-logs">—</div><div class="ci-fc" id="fc-logs"></div></div>
         </div>
-        <div class="cleaner-item selected" data-category="thumbnails">
+        <div class="c-item selected" data-category="thumbnails">
           <div class="chk">✓</div>
-          <div class="ci-info">
-            <div class="ci-name">🖼️ Bélyegkép gyorsítótár</div>
-            <div class="ci-desc">Windows Explorer thumbs, Linux ~/.cache/thumbnails</div>
-          </div>
-          <div class="ci-size"><div class="ci-val" id="sz-thumbnails">—</div><div class="ci-files" id="fc-thumbnails">—</div></div>
+          <div class="ci-info"><div class="ci-name">🖼️ Bélyegkép cache</div><div class="ci-desc">Windows Explorer thumbcache, ~/.cache/thumbnails</div></div>
+          <div class="ci-size"><div class="ci-val" id="sz-thumbnails">—</div><div class="ci-fc" id="fc-thumbnails"></div></div>
         </div>
-        <div class="cleaner-item" data-category="trash">
+        <div class="c-item" data-category="custom" id="customItem">
           <div class="chk"></div>
-          <div class="ci-info">
-            <div class="ci-name">🗑️ Lomtár</div>
-            <div class="ci-desc">Lomtárban lévő fájlok végleges, visszavonhatatlan törlése</div>
-          </div>
-          <div class="ci-size"><div class="ci-val" id="sz-trash">—</div><div class="ci-files" id="fc-trash">—</div></div>
+          <div class="ci-info"><div class="ci-name">📁 Egyéni mappák</div><div class="ci-desc" id="customDirsDesc">Nincs egyéni mappa — állítsd be a Beállításokban</div></div>
+          <div class="ci-size"><div class="ci-val" id="sz-custom">—</div><div class="ci-fc" id="fc-custom"></div></div>
         </div>
-        <div class="cleaner-item" data-category="downloads">
+        <div class="c-item" data-category="trash">
           <div class="chk"></div>
-          <div class="ci-info">
-            <div class="ci-name">⬇️ Letöltések (csak elemzés)</div>
-            <div class="ci-desc">~/Downloads mappa mérete — nem törli, csak megmutatja</div>
-          </div>
-          <div class="ci-size"><div class="ci-val" id="sz-downloads">—</div><div class="ci-files" id="fc-downloads">—</div></div>
+          <div class="ci-info"><div class="ci-name">🗑️ Lomtár</div><div class="ci-desc">Visszavonhatatlan törlés! Ellenőrizd a tartalmát előtte.</div></div>
+          <div class="ci-size"><div class="ci-val" id="sz-trash">—</div><div class="ci-fc" id="fc-trash"></div></div>
         </div>
       </div>
 
       <div class="action-bar">
-        <button class="btn btn-primary" onclick="runScan()">🔍 Beolvasás</button>
-        <button class="btn btn-danger" id="cleanBtn" onclick="runClean()" disabled>⚡ Tisztítás</button>
-        <button class="btn btn-sec" onclick="selAll()">☑ Összes</button>
-        <button class="btn btn-sec" onclick="selNone()">☐ Egyik sem</button>
+        <button class="btn btn-p" onclick="runScan()">🔍 Beolvasás</button>
+        <button class="btn btn-d" id="cleanBtn" onclick="runClean()" disabled>⚡ Tisztítás</button>
+        <button class="btn btn-s btn-sm" onclick="selAll()">☑ Mind</button>
+        <button class="btn btn-s btn-sm" onclick="selNone()">☐ Egyik sem</button>
         <div class="age-filter">
-          <label>Minimum kor:</label>
-          <select class="age-select" id="ageFilter">
+          <label>Kor:</label>
+          <select class="styled" id="ageFilter">
             <option value="0">Mindent töröl</option>
             <option value="1">1 napnál régebbi</option>
             <option value="7">7 napnál régebbi</option>
@@ -452,92 +547,270 @@
         </div>
       </div>
 
-      <div class="progress-wrap" id="progressWrap">
-        <div class="prog-lbl" id="progLabel">Beolvasás...</div>
-        <div class="prog-bg"><div class="prog-fill indeterminate" id="progFill"></div></div>
+      <div class="prog-wrap" id="progWrap">
+        <div class="prog-lbl" id="progLabel">...</div>
+        <div class="prog-bg"><div class="prog-fill ind" id="progFill"></div></div>
         <div id="resultArea"></div>
       </div>
 
-      <div style="margin-top:12px">
+      <div style="margin-top:10px">
         <div class="log-box" id="cleanerLog">
-          <div class="log-line info">[ PyCleaner v2.0 ] Kész. Kattints a "Beolvasás" gombra.</div>
+          <div class="ll info">[ PyCleaner v3.0 ] Kész. Indítsd a beolvasást.</div>
         </div>
       </div>
     </div>
 
-    <!-- ===== ANALYZER ===== -->
+    <!-- ══════════ MONITOR ══════════ -->
+    <div class="page" id="page-monitor">
+      <div class="page-title">Élő Rendszermonitor</div>
+      <div class="page-sub">Valós idejű CPU, RAM, Swap, Lemez, Hálózat és folyamatok</div>
+
+      <div class="monitor-grid">
+        <div class="gauge-card">
+          <div class="gauge-val" id="monCPU" style="color:var(--accent)">—</div>
+          <div class="gauge-lbl">CPU</div>
+          <div class="mini-bar"><div class="mini-bar-fill" id="monCPUBar" style="background:var(--accent);width:0%"></div></div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-val" id="monRAM" style="color:var(--accent2)">—</div>
+          <div class="gauge-lbl">RAM</div>
+          <div class="mini-bar"><div class="mini-bar-fill" id="monRAMBar" style="background:var(--accent2);width:0%"></div></div>
+          <div class="gauge-sub" id="monRAMSub"></div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-val" id="monSwap" style="color:var(--warn)">—</div>
+          <div class="gauge-lbl">Swap</div>
+          <div class="mini-bar"><div class="mini-bar-fill" id="monSwapBar" style="background:var(--warn);width:0%"></div></div>
+          <div class="gauge-sub" id="monSwapSub"></div>
+        </div>
+        <div class="gauge-card">
+          <div class="gauge-val" id="monDisk" style="color:var(--accent3)">—</div>
+          <div class="gauge-lbl">Lemez (tele)</div>
+          <div class="mini-bar"><div class="mini-bar-fill" id="monDiskBar" style="background:var(--accent3);width:0%"></div></div>
+          <div class="gauge-sub" id="monDiskSub"></div>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-bottom:14px">
+        <div class="card">
+          <div class="card-hdr"><span class="card-lbl">Hálózat – Küldött</span><span class="card-ico">📤</span></div>
+          <div class="stat" id="monNetSent" style="font-size:16px">—</div>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-lbl">Hálózat – Fogadott</span><span class="card-ico">📥</span></div>
+          <div class="stat" id="monNetRecv" style="font-size:16px;color:var(--accent2)">—</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-hdr"><span class="card-lbl">Top folyamatok (RAM szerint)</span><span class="card-ico">🔬</span></div>
+        <table class="proc-table" id="procTable">
+          <thead><tr><th>PID</th><th>Folyamat</th><th>RAM %</th><th>CPU %</th></tr></thead>
+          <tbody id="procBody"><tr><td colspan="4" style="color:var(--text2);padding:14px;text-align:center">Betöltés...</td></tr></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:10px;font-size:9px;color:var(--text2)" id="monTs">Frissítve: —</div>
+      <div id="monError" style="display:none;margin-top:10px;font-size:11px;color:var(--danger)"></div>
+    </div>
+
+    <!-- ══════════ ANALYZER ══════════ -->
     <div class="page" id="page-analyzer">
       <div class="page-title">Lemez Elemző</div>
-      <div class="page-sub">Felhasználói mappák mérete és aránya vizualizálva</div>
-      <div id="analyzerContent">
-        <div style="text-align:center;padding:40px;color:var(--text2)">
-          <div style="font-size:36px;margin-bottom:12px">📊</div>
-          <div style="font-size:12px">Kattints az "Elemzés indítása" gombra</div>
-        </div>
+      <div class="page-sub">Felhasználói mappák mérete</div>
+      <div id="analyzerContent" style="text-align:center;padding:40px;color:var(--text2)">
+        <div style="font-size:36px;margin-bottom:12px">📊</div>
+        <div style="font-size:11px">Kattints az "Elemzés" gombra</div>
       </div>
       <div style="margin-top:14px">
-        <button class="btn btn-primary" onclick="runAnalyzer()">📊 Elemzés indítása</button>
+        <button class="btn btn-p" onclick="runAnalyzer()">📊 Elemzés indítása</button>
       </div>
     </div>
 
-    <!-- ===== LARGE FILES ===== -->
+    <!-- ══════════ LARGE FILES ══════════ -->
     <div class="page" id="page-largefiles">
-      <div class="page-title">Nagy Fájlok Keresése</div>
+      <div class="page-title">Nagy Fájlok</div>
       <div class="page-sub">Keresd meg a legtöbb helyet foglaló fájlokat</div>
       <div class="lf-controls">
-        <input class="lf-input" id="lfPath" type="text" placeholder="Mappa (pl. C:\Users\csibe)" value="">
-        <input class="lf-input" id="lfMinMB" type="number" placeholder="Min. MB" value="50" style="flex:0;width:100px">
-        <button class="btn btn-primary" onclick="runLargeFiles()">🔍 Keresés</button>
+        <input class="lf-input" id="lfPath" type="text" placeholder="Mappa (pl. C:\Users\csibe)">
+        <input class="lf-input" id="lfMinMB" type="number" placeholder="Min. MB" value="50" style="flex:0;width:90px">
+        <button class="btn btn-p" onclick="runLargeFiles()">🔍 Keresés</button>
       </div>
-      <div id="lfResults">
-        <div style="text-align:center;padding:30px;color:var(--text2);font-size:12px">Még nem futott keresés</div>
-      </div>
+      <div id="lfResults" style="text-align:center;padding:30px;color:var(--text2);font-size:11px">Még nem futott keresés</div>
     </div>
 
-    <!-- ===== SYSTEM ===== -->
+    <!-- ══════════ DUPLICATES ══════════ -->
+    <div class="page" id="page-duplicates">
+      <div class="page-title">Duplikált Fájlok</div>
+      <div class="page-sub">Azonos tartalmú fájlok keresése MD5 hash alapján</div>
+      <div class="lf-controls">
+        <input class="lf-input" id="dupPath" type="text" placeholder="Keresési mappa">
+        <input class="lf-input" type="number" id="dupMinKB" value="10" placeholder="Min. KB" style="flex:0;width:90px">
+        <button class="btn btn-p" onclick="runDuplicates()">🔍 Keresés</button>
+      </div>
+      <div id="dupWarning" style="display:none;background:rgba(255,184,48,.1);border:1px solid var(--warn);border-radius:4px;padding:10px 14px;font-size:10px;color:var(--warn);margin-bottom:12px">
+        ⚠️ Nagy mappákban a keresés hosszú ideig tarthat!
+      </div>
+      <div id="dupSummary" style="display:none;margin-bottom:12px"></div>
+      <div id="dupResults"></div>
+    </div>
+
+    <!-- ══════════ REGISTRY ══════════ -->
+    <div class="page" id="page-registry">
+      <div class="page-title">Registry Tisztítás</div>
+      <div class="page-sub">Windows rendszerleíró adatbázis hibás bejegyzések keresése</div>
+      <div id="regStatus" style="padding:20px;text-align:center;color:var(--text2);font-size:11px">
+        Kattints a "Beolvasás" gombra a registry elemzéséhez.
+      </div>
+      <div style="margin-bottom:14px;display:flex;gap:8px">
+        <button class="btn btn-p" onclick="runRegScan()">🔍 Registry beolvasás</button>
+        <button class="btn btn-d" id="regCleanAllBtn" style="display:none" onclick="cleanAllRegistry()">🗑️ Összes javítása</button>
+      </div>
+      <div id="regResults"></div>
+    </div>
+
+    <!-- ══════════ SYSTEM ══════════ -->
     <div class="page" id="page-system">
       <div class="page-title">Rendszerinformáció</div>
-      <div class="page-sub">Az aktuális rendszer állapota és lemezhasználat</div>
+      <div class="page-sub">Aktuális rendszer és lemezhasználat</div>
       <div class="disk-overview">
-        <canvas id="diskChart" width="110" height="110"></canvas>
-        <div class="disk-legend" id="diskLegend">
-          <div style="color:var(--text2);font-size:11px">Betöltés...</div>
-        </div>
+        <canvas id="diskChart" width="100" height="100"></canvas>
+        <div class="disk-legend" id="diskLegend"><div style="color:var(--text2);font-size:10px">Betöltés...</div></div>
       </div>
-      <div class="grid-3" id="sysCards">
-        <div class="card"><div class="card-hdr"><span class="card-lbl">Operációs rendszer</span><span class="card-ico">🖥️</span></div><div class="stat" style="font-size:13px" id="sysOS">—</div></div>
-        <div class="card"><div class="card-hdr"><span class="card-lbl">Processzor</span><span class="card-ico">⚙️</span></div><div class="stat" style="font-size:12px" id="sysCPU">—</div></div>
-        <div class="card"><div class="card-hdr"><span class="card-lbl">Hostnév</span><span class="card-ico">🔌</span></div><div class="stat" style="font-size:13px" id="sysHost">—</div></div>
-        <div class="card"><div class="card-hdr"><span class="card-lbl">Lemez összesen</span><span class="card-ico">💾</span></div><div class="stat" id="sysDT">—</div></div>
+      <div class="grid-3" style="margin-bottom:16px">
+        <div class="card"><div class="card-hdr"><span class="card-lbl">Operációs rendszer</span><span class="card-ico">🖥️</span></div><div class="stat" style="font-size:12px" id="sysOS">—</div></div>
+        <div class="card"><div class="card-hdr"><span class="card-lbl">Processzor</span><span class="card-ico">⚙️</span></div><div class="stat" style="font-size:11px" id="sysCPU">—</div></div>
+        <div class="card"><div class="card-hdr"><span class="card-lbl">Hostnév</span><span class="card-ico">🔌</span></div><div class="stat" style="font-size:12px" id="sysHost">—</div></div>
+        <div class="card"><div class="card-hdr"><span class="card-lbl">Összesen</span><span class="card-ico">💾</span></div><div class="stat" id="sysDT">—</div></div>
         <div class="card"><div class="card-hdr"><span class="card-lbl">Felhasznált</span><span class="card-ico">📈</span></div><div class="stat" style="color:var(--accent2)" id="sysDU">—</div></div>
         <div class="card"><div class="card-hdr"><span class="card-lbl">Szabad</span><span class="card-ico">✅</span></div><div class="stat" style="color:var(--accent3)" id="sysDF">—</div></div>
       </div>
     </div>
 
-    <!-- ===== HISTORY ===== -->
-    <div class="page" id="page-history">
-      <div class="page-title">Tisztítási Előzmények</div>
-      <div class="page-sub">Az eddigi tisztítások naplója és statisztikái</div>
-      <div style="display:flex;gap:10px;margin-bottom:16px">
-        <button class="btn btn-primary" onclick="loadHistory()">🔄 Frissítés</button>
-        <button class="btn btn-sec" onclick="clearHistory()">🗑️ Előzmények törlése</button>
-      </div>
-      <div id="historyContent">
-        <div style="color:var(--text2);font-size:12px;padding:20px">Betöltés...</div>
+    <!-- ══════════ SCHEDULE ══════════ -->
+    <div class="page" id="page-schedule">
+      <div class="page-title">Automatikus Ütemező</div>
+      <div class="page-sub">Automatikus rendszertisztítás beállítása háttérben</div>
+      <div class="sched-card">
+        <div class="sched-row">
+          <div><div class="sched-lbl">Ütemező engedélyezve</div><div style="font-size:9px;color:var(--text2)">A szerver háttérben futtatja a tisztítást</div></div>
+          <div class="toggle" id="schedToggle" onclick="toggleSched()"></div>
+        </div>
+        <div class="sched-row">
+          <div class="sched-lbl">Ismétlési időköz</div>
+          <select class="styled" id="schedInterval">
+            <option value="1">Minden óra</option>
+            <option value="6">6 óránként</option>
+            <option value="12">12 óránként</option>
+            <option value="24" selected>24 óránként</option>
+            <option value="168">Hetente</option>
+          </select>
+        </div>
+        <div class="sched-row">
+          <div class="sched-lbl">Kategóriák</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <label style="font-size:10px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="scat-temp" checked> Ideiglenes</label>
+            <label style="font-size:10px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="scat-browser" checked> Böngésző</label>
+            <label style="font-size:10px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="scat-logs" checked> Logok</label>
+            <label style="font-size:10px;display:flex;gap:4px;align-items:center"><input type="checkbox" id="scat-thumbnails"> Bélyegképek</label>
+          </div>
+        </div>
+        <div class="sched-row">
+          <div><div class="sched-lbl">Utolsó automatikus futás</div></div>
+          <div id="schedLastRun" style="font-size:10px;color:var(--text2)">Soha</div>
+        </div>
+        <div style="padding-top:14px">
+          <button class="btn btn-p" onclick="saveSched()">💾 Mentés</button>
+          <button class="btn btn-s btn-sm" onclick="runNow()" style="margin-left:8px">▶ Azonnali futtatás</button>
+        </div>
       </div>
     </div>
 
-    <!-- ===== LOG ===== -->
-    <div class="page" id="page-log">
-      <div class="page-title">Eseménynapló</div>
-      <div class="page-sub">Minden PyCleaner művelet naplózása</div>
-      <div class="card">
-        <div class="log-box" id="eventLog" style="max-height:520px">
-          <div class="log-line info">[ PyCleaner ] Eseménynapló elindult.</div>
+    <!-- ══════════ BACKUPS ══════════ -->
+    <div class="page" id="page-backups">
+      <div class="page-title">Biztonsági Másolatok</div>
+      <div class="page-sub">Törlés előtt automatikusan készített biztonsági mentések</div>
+      <div style="margin-bottom:14px;display:flex;gap:8px">
+        <button class="btn btn-p btn-sm" onclick="loadBackups()">🔄 Frissítés</button>
+        <a class="btn btn-g btn-sm" href="/api/export/html" target="_blank">📊 HTML Riport</a>
+        <a class="btn btn-s btn-sm" href="/api/export/json" target="_blank">📄 JSON Export</a>
+      </div>
+      <div id="backupList" class="card" style="padding:0"><div style="padding:20px;text-align:center;color:var(--text2);font-size:11px">Betöltés...</div></div>
+    </div>
+
+    <!-- ══════════ HISTORY ══════════ -->
+    <div class="page" id="page-history">
+      <div class="page-title">Tisztítási Előzmények</div>
+      <div class="page-sub">Korábbi műveletek és statisztikák</div>
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <button class="btn btn-p btn-sm" onclick="loadHistory()">🔄 Frissítés</button>
+        <button class="btn btn-s btn-sm" onclick="clearHistory()">🗑️ Törlés</button>
+      </div>
+      <div id="histContent" style="color:var(--text2);font-size:11px;padding:20px">Betöltés...</div>
+    </div>
+
+    <!-- ══════════ SETTINGS ══════════ -->
+    <div class="page" id="page-settings">
+      <div class="page-title">Beállítások & Profilok</div>
+      <div class="page-sub">Testreszabás, profilok, biztonsági mentések</div>
+
+      <div class="settings-section">
+        <div class="settings-title">Aktív profil</div>
+        <div class="form-row">
+          <span class="form-lbl">Profil neve</span>
+          <input type="text" class="styled" id="cfgProfileName" placeholder="Profil neve">
+        </div>
+        <div class="form-row">
+          <span class="form-lbl">Profil jelszó</span>
+          <input type="password" class="styled" id="cfgPassword" placeholder="Üresen hagyva = nincs védelem">
+        </div>
+        <div class="form-row">
+          <span class="form-lbl">Backup limit (MB)</span>
+          <input type="number" class="styled" id="cfgBackupMB" value="200" style="width:100px;flex:none">
+        </div>
+        <div class="form-row">
+          <span class="form-lbl">Auto backup törlés előtt</span>
+          <div class="toggle-wrap">
+            <div class="toggle on" id="cfgAutoBackup" onclick="this.classList.toggle('on')"></div>
+            <span class="toggle-lbl">Biztonsági mentés készítése törlés előtt</span>
+          </div>
         </div>
       </div>
-      <div style="margin-top:12px">
-        <button class="btn btn-sec" onclick="document.getElementById('eventLog').innerHTML='<div class=\'log-line info\'>[ Napló törölve ]</div>'">🗑️ Napló törlése</button>
+
+      <div class="settings-section">
+        <div class="settings-title">Egyéni mappák</div>
+        <div id="customDirTags" style="margin-bottom:8px"></div>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="styled" id="newDirInput" placeholder="Mappa elérési útja (pl. D:\MyCache)">
+          <button class="btn btn-s btn-sm" onclick="addCustomDir()">+ Hozzáadás</button>
+        </div>
+      </div>
+
+      <div class="settings-section">
+        <div class="settings-title">Új profil</div>
+        <div style="display:flex;gap:8px">
+          <input type="text" class="styled" id="newProfileName" placeholder="Új profil neve">
+          <button class="btn btn-p btn-sm" onclick="createProfile()">+ Létrehozás</button>
+        </div>
+      </div>
+
+      <div style="margin-top:16px;display:flex;gap:8px">
+        <button class="btn btn-p" onclick="saveSettings()">💾 Beállítások mentése</button>
+        <button class="btn btn-d btn-sm" onclick="deleteProfile()">🗑️ Profil törlése</button>
+      </div>
+    </div>
+
+    <!-- ══════════ LOG ══════════ -->
+    <div class="page" id="page-log">
+      <div class="page-title">Eseménynapló</div>
+      <div class="page-sub">Összes PyCleaner művelet naplózása</div>
+      <div class="card">
+        <div class="log-box" id="eventLog" style="max-height:520px">
+          <div class="ll info">[ PyCleaner v3.0 ] Napló indítva.</div>
+        </div>
+      </div>
+      <div style="margin-top:10px">
+        <button class="btn btn-s btn-sm" onclick="document.getElementById('eventLog').innerHTML='<div class=\'ll info\'>[ Napló törölve ]</div>'">🗑️ Napló törlése</button>
       </div>
     </div>
 
@@ -545,20 +818,69 @@
 </div>
 
 <script>
-// ---- NAV ----
+// ═══════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════
+let scanData = {};
+let monitorES = null;
+let regIssues = [];
+let _theme = localStorage.getItem('pycleaner_theme') || 'dark';
+let _config = null;
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+document.addEventListener('DOMContentLoaded', () => {
+  applyTheme(_theme);
+  loadSysInfo();
+  loadConfig();
+  loadScheduleUI();
+  loadBackups();
+  loadHistory();
+
+  // Set large files default path
+  document.getElementById('lfPath').value = 'C:\\Users';
+  document.getElementById('dupPath').value = 'C:\\Users';
+});
+
+// ═══════════════════════════════════════════════════════════
+// THEME
+// ═══════════════════════════════════════════════════════════
+function toggleTheme() {
+  _theme = _theme === 'dark' ? 'light' : 'dark';
+  applyTheme(_theme);
+  localStorage.setItem('pycleaner_theme', _theme);
+}
+function applyTheme(t) {
+  document.documentElement.setAttribute('data-theme', t);
+  document.getElementById('themeBtn').textContent = t === 'dark' ? '☀️' : '🌙';
+  _theme = t;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
 document.querySelectorAll('.nav-item').forEach(item => {
   item.addEventListener('click', () => {
     document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
     item.classList.add('active');
-    document.getElementById('page-' + item.dataset.page).classList.add('active');
-    if (item.dataset.page === 'system') loadSysInfo();
-    if (item.dataset.page === 'history') loadHistory();
+    const page = item.dataset.page;
+    document.getElementById('page-' + page).classList.add('active');
+    if (page === 'system')   loadSysInfo();
+    if (page === 'monitor')  startMonitor();
+    if (page === 'history')  loadHistory();
+    if (page === 'backups')  loadBackups();
+    if (page === 'schedule') loadScheduleUI();
+    if (page === 'settings') loadSettingsUI();
+    if (page !== 'monitor')  stopMonitor();
   });
 });
 
-// ---- CHECKBOX ----
-document.querySelectorAll('.cleaner-item').forEach(item => {
+// ═══════════════════════════════════════════════════════════
+// CHECKBOX
+// ═══════════════════════════════════════════════════════════
+document.querySelectorAll('.c-item').forEach(item => {
   item.addEventListener('click', () => {
     item.classList.toggle('selected');
     item.querySelector('.chk').textContent = item.classList.contains('selected') ? '✓' : '';
@@ -566,335 +888,634 @@ document.querySelectorAll('.cleaner-item').forEach(item => {
   });
 });
 
-function selAll() {
-  document.querySelectorAll('.cleaner-item').forEach(i => {
-    i.classList.add('selected');
-    i.querySelector('.chk').textContent = '✓';
-  });
-  updateTotal();
-}
-
-function selNone() {
-  document.querySelectorAll('.cleaner-item').forEach(i => {
-    i.classList.remove('selected');
-    i.querySelector('.chk').textContent = '';
-  });
-  updateTotal();
-}
-
-function getSelected() {
-  return [...document.querySelectorAll('.cleaner-item.selected')].map(i => i.dataset.category);
-}
-
-let scanResults = {};
+function selAll()  { document.querySelectorAll('.c-item').forEach(i => { i.classList.add('selected'); i.querySelector('.chk').textContent = '✓'; }); updateTotal(); }
+function selNone() { document.querySelectorAll('.c-item').forEach(i => { i.classList.remove('selected'); i.querySelector('.chk').textContent = ''; }); updateTotal(); }
+function getSelected() { return [...document.querySelectorAll('.c-item.selected')].map(i => i.dataset.category); }
 
 function updateTotal() {
-  let total = 0;
-  getSelected().forEach(cat => {
-    if (scanResults[cat]) total += scanResults[cat].size || 0;
-  });
-  document.getElementById('totalFreeable').textContent = total > 0 ? fmtB(total) : '—';
-  document.getElementById('navClean').textContent = total > 0 ? fmtB(total) : '—';
+  let t = 0;
+  getSelected().forEach(cat => { if (scanData[cat]) t += scanData[cat].size || 0; });
+  document.getElementById('totalFreeable').textContent = t > 0 ? fmtB(t) : '—';
+  document.getElementById('navClean').textContent = t > 0 ? fmtB(t) : '—';
 }
 
-// ---- LOG ----
+// ═══════════════════════════════════════════════════════════
+// TOAST
+// ═══════════════════════════════════════════════════════════
+function toast(msg, type = 'info', dur = 4000) {
+  const d = document.createElement('div');
+  d.className = `toast ${type}`;
+  d.textContent = msg;
+  document.getElementById('toastContainer').appendChild(d);
+  setTimeout(() => d.remove(), dur);
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOG
+// ═══════════════════════════════════════════════════════════
 function addLog(msg, type = '') {
   const t = new Date().toLocaleTimeString('hu-HU');
   ['cleanerLog', 'eventLog'].forEach(id => {
     const el = document.getElementById(id);
     if (!el) return;
     const line = document.createElement('div');
-    line.className = 'log-line ' + type;
+    line.className = 'll ' + type;
     line.textContent = `[${t}] ${msg}`;
     el.appendChild(line);
     el.scrollTop = 9999;
   });
 }
 
-// ---- SCAN ----
+// ═══════════════════════════════════════════════════════════
+// SCAN
+// ═══════════════════════════════════════════════════════════
 async function runScan() {
-  const pw = document.getElementById('progressWrap');
-  pw.classList.add('visible');
-  setProgress('indeterminate', 'Beolvasás folyamatban...');
+  document.getElementById('progWrap').classList.add('visible');
+  setProgress('ind', 'Beolvasás...');
   document.getElementById('resultArea').innerHTML = '';
   document.getElementById('cleanBtn').disabled = true;
   addLog('Beolvasás indítva...', 'info');
-
-  ['temp','browser','logs','thumbnails','trash','downloads'].forEach(cat => {
-    const szEl = document.getElementById('sz-' + cat);
-    const fcEl = document.getElementById('fc-' + cat);
-    if (szEl) szEl.innerHTML = '<span class="ci-scanning">…</span>';
-    if (fcEl) fcEl.textContent = '';
+  ['temp','browser','logs','thumbnails','custom','trash','downloads'].forEach(cat => {
+    const v = document.getElementById('sz-'+cat); const f = document.getElementById('fc-'+cat);
+    if (v) v.innerHTML = '<span class="ci-scan">…</span>';
+    if (f) f.textContent = '';
   });
-
   try {
-    const res = await fetch('/api/scan', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({category: 'all'})
+    const res = await fetch('/api/scan', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({category:'all'}) });
+    scanData = await res.json();
+    ['temp','browser','logs','thumbnails','custom','trash','downloads'].forEach(cat => {
+      const d = scanData[cat]; if (!d) return;
+      const v = document.getElementById('sz-'+cat); const f = document.getElementById('fc-'+cat);
+      if (v) v.textContent = d.size_fmt;
+      if (f) f.textContent = d.files + ' fájl';
     });
-    scanResults = await res.json();
-
-    ['temp','browser','logs','thumbnails','trash','downloads'].forEach(cat => {
-      const d = scanResults[cat];
-      if (!d) return;
-      const szEl = document.getElementById('sz-' + cat);
-      const fcEl = document.getElementById('fc-' + cat);
-      if (szEl) szEl.textContent = d.size_fmt;
-      if (fcEl) fcEl.textContent = d.files + ' fájl';
-    });
-
     updateTotal();
     setProgress('done', '✅ Beolvasás kész');
     document.getElementById('cleanBtn').disabled = false;
-
-    if (scanResults.disk) {
-      document.getElementById('navDisk').textContent = scanResults.disk.used_pct + '%';
-    }
-
-    let total = 0;
-    getSelected().forEach(cat => { if (scanResults[cat]) total += scanResults[cat].size || 0; });
-    addLog('Beolvasás kész. Felszabadítható: ' + fmtB(total), 'ok');
-
-  } catch(e) {
-    addLog('Hiba a beolvasás során: ' + e, 'err');
-    setProgress('done', '❌ Hiba');
-  }
+    if (scanData.disk) document.getElementById('navDisk').textContent = scanData.disk.used_pct + '%';
+    let t = 0; getSelected().forEach(cat => { if (scanData[cat]) t += scanData[cat].size || 0; });
+    addLog('Beolvasás kész. Felszabadítható: ' + fmtB(t), 'ok');
+    toast('Beolvasás kész — ' + fmtB(t) + ' felszabadítható', 'ok');
+  } catch(e) { addLog('Hiba: ' + e, 'err'); setProgress('done', '❌ Hiba'); }
 }
 
-// ---- CLEAN ----
+// ═══════════════════════════════════════════════════════════
+// CLEAN
+// ═══════════════════════════════════════════════════════════
 async function runClean() {
-  const selected = getSelected().filter(c => c !== 'downloads'); // downloads is analyze-only
-  if (!selected.length) { addLog('Nincs kiválasztott elem!', 'warn'); return; }
-
+  const selected = getSelected().filter(c => c !== 'downloads');
+  if (!selected.length) { toast('Nincs kiválasztott elem!', 'warn'); return; }
   const minAge = parseInt(document.getElementById('ageFilter').value);
-  const ageText = minAge > 0 ? ` (${minAge} napnál régebbi fájlok)` : '';
+  if (!confirm(`⚠️ Biztosan törlöd?\n\nKategóriák: ${selected.join(', ')}\n\nEz NEM vonható vissza!`)) return;
 
-  if (!confirm(`Biztosan törölni szeretnéd a kiválasztott elemeket?\n\nKategóriák: ${selected.join(', ')}${ageText}\n\n⚠️ Ez a művelet NEM vonható vissza!`)) return;
-
+  // Show animation
+  showCleanAnim();
   document.getElementById('cleanBtn').disabled = true;
-  setProgress('indeterminate', 'Tisztítás folyamatban...');
-  document.getElementById('resultArea').innerHTML = '';
-  addLog('Tisztítás indítva: ' + selected.join(', '), 'warn');
+  addLog('Tisztítás: ' + selected.join(', '), 'warn');
 
   try {
     const res = await fetch('/api/clean', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
+      method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify({categories: selected, min_age_days: minAge})
     });
     const data = await res.json();
-
-    setProgress('done', '✅ Tisztítás befejezve!');
-
+    hideCleanAnim();
+    setProgress('done', '✅ Tisztítás kész!');
     document.getElementById('resultArea').innerHTML = `
       <div class="result-grid">
-        <div class="result-card">
-          <div class="result-num" style="color:var(--accent3)">${data.total_freed}</div>
-          <div class="result-lbl">Felszabadítva</div>
-        </div>
-        <div class="result-card">
-          <div class="result-num" style="color:var(--accent)">${data.total_files}</div>
-          <div class="result-lbl">Törölt elem</div>
-        </div>
-        <div class="result-card">
-          <div class="result-num" style="color:${data.total_errors > 0 ? 'var(--danger)' : 'var(--accent3)'}">${data.total_errors}</div>
-          <div class="result-lbl">Hiba</div>
-        </div>
+        <div class="result-card"><div class="result-num" style="color:var(--accent3)">${data.total_freed}</div><div class="result-lbl">Felszabadítva</div></div>
+        <div class="result-card"><div class="result-num" style="color:var(--accent)">${data.total_files}</div><div class="result-lbl">Törölt elem</div></div>
+        <div class="result-card"><div class="result-num" style="color:${data.total_errors>0?'var(--danger)':'var(--accent3)'}">${data.total_errors}</div><div class="result-lbl">Hiba</div></div>
       </div>
-      <div class="result-details">${data.details.map(d => `▸ ${d.category}: ${d.files} elem, ${d.freed}`).join('<br>')}</div>
-    `;
-
-    addLog(`Kész! Felszabadítva: ${data.total_freed}, törölt: ${data.total_files}, hiba: ${data.total_errors}`, 'ok');
-    document.getElementById('navHist').textContent = parseInt(document.getElementById('navHist').textContent || 0) + 1;
-
-    // Rescan after 600ms
-    setTimeout(runScan, 600);
-
+      <div class="result-det">${data.details.map(d=>`▸ ${d.category}: ${d.files} elem, ${d.freed}`).join('<br>')}
+      ${data.backup_url ? `<br><a href="${data.backup_url}" style="color:var(--accent)">💾 Backup letöltése</a>` : ''}</div>`;
+    addLog(`Kész! ${data.total_freed}, ${data.total_files} fájl, ${data.total_errors} hiba`, 'ok');
+    toast(`✅ Tisztítás kész — ${data.total_freed} felszabadítva`, 'ok', 6000);
+    document.getElementById('navHist').textContent = parseInt(document.getElementById('navHist').textContent||0)+1;
+    setTimeout(runScan, 800);
   } catch(e) {
-    addLog('Hiba: ' + e, 'err');
+    hideCleanAnim();
+    addLog('Hiba: '+e, 'err');
     document.getElementById('cleanBtn').disabled = false;
+    toast('Hiba a tisztítás során', 'err');
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// ANIMATION
+// ═══════════════════════════════════════════════════════════
+function showCleanAnim() {
+  const el = document.getElementById('cleanAnim');
+  el.classList.add('visible');
+  const pc = document.getElementById('particles');
+  pc.innerHTML = '';
+  const colors = ['#00c8f0','#ff6b35','#5eff6e','#ffb830'];
+  for (let i = 0; i < 40; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    p.style.cssText = `left:${Math.random()*100}%;top:${Math.random()*100}%;background:${colors[i%colors.length]};animation-delay:${Math.random()*2}s;animation-duration:${1+Math.random()*2}s`;
+    pc.appendChild(p);
+  }
+  setProgress('ind', 'Takarítás folyamatban...');
+  document.getElementById('progWrap').classList.add('visible');
+}
+function hideCleanAnim() {
+  document.getElementById('cleanAnim').classList.remove('visible');
+}
+
+// ═══════════════════════════════════════════════════════════
+// PROGRESS
+// ═══════════════════════════════════════════════════════════
 function setProgress(state, label) {
   document.getElementById('progLabel').textContent = label;
-  const fill = document.getElementById('progFill');
-  if (state === 'indeterminate') {
-    fill.className = 'prog-fill indeterminate';
-    fill.style.width = '';
-  } else {
-    fill.className = 'prog-fill';
-    fill.style.width = '100%';
-  }
+  const f = document.getElementById('progFill');
+  if (state === 'ind') { f.className = 'prog-fill ind'; f.style.width = ''; }
+  else                 { f.className = 'prog-fill'; f.style.width = '100%'; }
 }
 
-// ---- ANALYZER ----
+// ═══════════════════════════════════════════════════════════
+// MONITOR
+// ═══════════════════════════════════════════════════════════
+function startMonitor() {
+  if (monitorES) return;
+  monitorES = new EventSource('/api/monitor');
+  monitorES.onmessage = e => {
+    try {
+      const d = JSON.parse(e.data);
+      if (d.error) {
+        document.getElementById('monError').style.display = 'block';
+        document.getElementById('monError').textContent = 'ℹ️ ' + d.error;
+        return;
+      }
+      document.getElementById('monCPU').textContent = d.cpu + '%';
+      document.getElementById('monCPUBar').style.width = d.cpu + '%';
+      document.getElementById('monRAM').textContent = d.ram_pct + '%';
+      document.getElementById('monRAMBar').style.width = d.ram_pct + '%';
+      document.getElementById('monRAMSub').textContent = d.ram_used + ' / ' + d.ram_total;
+      document.getElementById('monSwap').textContent = d.swap_pct + '%';
+      document.getElementById('monSwapBar').style.width = d.swap_pct + '%';
+      document.getElementById('monSwapSub').textContent = d.swap_used + ' / ' + d.swap_total;
+      document.getElementById('monDisk').textContent = d.disk_pct + '%';
+      document.getElementById('monDiskBar').style.width = d.disk_pct + '%';
+      document.getElementById('monDiskSub').textContent = 'Szabad: ' + d.disk_free;
+      document.getElementById('monNetSent').textContent = d.net_sent;
+      document.getElementById('monNetRecv').textContent = d.net_recv;
+      document.getElementById('monTs').textContent = 'Frissítve: ' + d.ts;
+      document.getElementById('navCPU').textContent = d.cpu + '%';
+      // Processes
+      const tbody = document.getElementById('procBody');
+      if (d.processes && d.processes.length) {
+        tbody.innerHTML = d.processes.map(p => `
+          <tr>
+            <td style="color:var(--text2)">${p.pid}</td>
+            <td>${p.name}</td>
+            <td style="color:var(--accent2)">${p.mem_pct}%</td>
+            <td style="color:var(--accent)">${p.cpu_pct}%</td>
+          </tr>`).join('');
+      }
+    } catch(e) {}
+  };
+}
+function stopMonitor() {
+  if (monitorES) { monitorES.close(); monitorES = null; }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ANALYZER
+// ═══════════════════════════════════════════════════════════
 async function runAnalyzer() {
-  document.getElementById('analyzerContent').innerHTML = '<div style="color:var(--text2);font-size:11px;padding:20px">Elemzés folyamatban...</div>';
+  document.getElementById('analyzerContent').innerHTML = '<div style="color:var(--text2);font-size:10px;padding:20px">Elemzés...</div>';
   const res = await fetch('/api/disk_usage');
   const data = await res.json();
-
-  if (!data.length) {
-    document.getElementById('analyzerContent').innerHTML = '<div style="color:var(--text2);padding:20px;font-size:12px">Nem találhatók mappák.</div>';
-    return;
-  }
-
-  const maxSize = data[0].size;
+  if (!data.length) { document.getElementById('analyzerContent').innerHTML = '<div style="padding:20px;color:var(--text2)">Nem találhatók mappák.</div>'; return; }
+  const max = data[0].size;
   let html = '<div class="card">';
   data.forEach(item => {
-    const pct = maxSize > 0 ? (item.size / maxSize * 100) : 0;
-    html += `
-      <div class="disk-item">
-        <div><div class="disk-name">${item.name}</div><div class="disk-path">${item.path}</div></div>
-        <div class="disk-bar-bg"><div class="disk-bar-fill" style="width:${pct}%"></div></div>
-        <div class="disk-sz">${item.size_fmt}</div>
-      </div>`;
+    const pct = max > 0 ? (item.size/max*100) : 0;
+    html += `<div class="disk-item">
+      <div><div class="disk-name">${item.name}</div><div class="disk-path">${item.path}</div></div>
+      <div class="disk-bar-bg"><div class="disk-bar-fill" style="width:${pct}%"></div></div>
+      <div class="disk-sz">${item.size_fmt}</div>
+    </div>`;
   });
   html += '</div>';
   document.getElementById('analyzerContent').innerHTML = html;
   addLog('Lemez elemzés kész', 'ok');
 }
 
-// ---- LARGE FILES ----
+// ═══════════════════════════════════════════════════════════
+// LARGE FILES
+// ═══════════════════════════════════════════════════════════
 async function runLargeFiles() {
-  const path = document.getElementById('lfPath').value || '~';
+  const path = document.getElementById('lfPath').value;
   const minMB = parseInt(document.getElementById('lfMinMB').value) || 50;
-  document.getElementById('lfResults').innerHTML = '<div style="color:var(--text2);font-size:11px;padding:20px;animation:blink 1s infinite">🔍 Keresés folyamatban... (ez eltarthat egy ideig)</div>';
-  addLog(`Nagy fájlok keresése: ${path}, min. ${minMB} MB`, 'info');
-
+  document.getElementById('lfResults').innerHTML = '<div style="color:var(--text2);padding:20px;font-size:10px;animation:blink 1s infinite">🔍 Keresés...</div>';
+  addLog(`Nagy fájlok: ${path}, min. ${minMB} MB`, 'info');
   try {
-    const res = await fetch('/api/large_files', {
-      method: 'POST', headers: {'Content-Type':'application/json'},
-      body: JSON.stringify({path, min_size_mb: minMB})
-    });
+    const res = await fetch('/api/large_files', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path, min_size_mb: minMB}) });
     const data = await res.json();
-
-    if (!data.length) {
-      document.getElementById('lfResults').innerHTML = `<div style="color:var(--text2);font-size:12px;padding:20px">Nem találhatók ${minMB} MB-nál nagyobb fájlok.</div>`;
-      return;
-    }
-
-    const extColors = {
-      '.mp4': '#ff6b35', '.mkv': '#ff6b35', '.avi': '#ff6b35',
-      '.iso': '#ffb830', '.zip': '#ffb830', '.rar': '#ffb830',
-      '.exe': '#00c8f0', '.msi': '#00c8f0',
-      '.psd': '#c87fff', '.ai': '#c87fff',
-      '.db': '#5eff6e', '.sqlite': '#5eff6e',
-    };
-
-    let html = `<div class="card"><div style="font-size:10px;color:var(--text2);margin-bottom:10px">${data.length} fájl találva (${minMB} MB felett)</div>`;
+    if (!data.length) { document.getElementById('lfResults').innerHTML = `<div style="padding:20px;color:var(--text2);font-size:11px">Nem találhatók ${minMB} MB-nál nagyobb fájlok.</div>`; return; }
+    const extC = {'.mp4':'#ff6b35','.mkv':'#ff6b35','.avi':'#ff6b35','.iso':'#ffb830','.zip':'#ffb830','.rar':'#ffb830','.exe':'#00c8f0','.msi':'#00c8f0','.psd':'#c87fff','.db':'#5eff6e'};
+    let html = `<div class="card" style="padding:0"><div style="padding:10px 12px;font-size:9px;color:var(--text2);border-bottom:1px solid var(--border)">${data.length} fájl (${minMB} MB felett)</div>`;
     data.forEach(f => {
-      const color = extColors[f.ext] || 'var(--text2)';
-      html += `
-        <div class="lf-row">
-          <div>
-            <div class="lf-name" title="${f.path}">${f.name}</div>
-            <div class="lf-path">${f.path}</div>
-          </div>
-          <div class="lf-size">${f.size_fmt}</div>
-          <div class="ext-badge" style="color:${color};border-color:${color}40">${f.ext || '?'}</div>
-        </div>`;
+      const c = extC[f.ext] || 'var(--text2)';
+      html += `<div class="lf-row">
+        <div><div class="lf-name" title="${f.path}">${f.name}</div><div class="lf-fp">${f.path}</div></div>
+        <div class="lf-sz">${f.size_fmt}</div>
+        <div class="ext-badge" style="color:${c};border-color:${c}40">${f.ext||'?'}</div>
+        <button class="del-btn" onclick="deleteFile('${f.path.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}', this)" title="Törlés">🗑️</button>
+      </div>`;
     });
     html += '</div>';
     document.getElementById('lfResults').innerHTML = html;
-    addLog(`Nagy fájlok keresése kész: ${data.length} találat`, 'ok');
+    addLog(`Nagy fájlok: ${data.length} találat`, 'ok');
   } catch(e) {
-    document.getElementById('lfResults').innerHTML = `<div style="color:var(--danger);padding:20px;font-size:11px">Hiba: ${e}</div>`;
-    addLog('Hiba: ' + e, 'err');
+    document.getElementById('lfResults').innerHTML = `<div style="color:var(--danger);padding:20px;font-size:10px">Hiba: ${e}</div>`;
   }
 }
 
-// ---- SYSTEM INFO ----
+async function deleteFile(path, btn) {
+  if (!confirm('Biztosan törölni szeretnéd?\n' + path)) return;
+  const res = await fetch('/api/delete_file', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path}) });
+  const d = await res.json();
+  if (d.ok) { btn.closest('.lf-row').remove(); toast('Fájl törölve', 'ok'); addLog('Törölve: ' + path, 'ok'); }
+  else toast('Hiba: ' + d.error, 'err');
+}
+
+// ═══════════════════════════════════════════════════════════
+// DUPLICATES
+// ═══════════════════════════════════════════════════════════
+async function runDuplicates() {
+  const path = document.getElementById('dupPath').value;
+  const minKB = parseInt(document.getElementById('dupMinKB').value) || 10;
+  document.getElementById('dupWarning').style.display = 'block';
+  document.getElementById('dupSummary').style.display = 'none';
+  document.getElementById('dupResults').innerHTML = '<div style="color:var(--text2);padding:20px;font-size:10px;animation:blink 1s infinite">🔍 MD5 hash számítás folyamatban... (lassabb lehet nagy mappákon)</div>';
+  addLog(`Duplikátum keresés: ${path}`, 'info');
+  try {
+    const res = await fetch('/api/duplicates', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path, min_size_kb: minKB}) });
+    const data = await res.json();
+    document.getElementById('navDup').textContent = data.total_groups || '—';
+    if (!data.groups.length) {
+      document.getElementById('dupResults').innerHTML = '<div style="padding:20px;color:var(--text2);font-size:11px">✅ Nem találhatók duplikált fájlok.</div>';
+      return;
+    }
+    const sum = document.getElementById('dupSummary');
+    sum.style.display = 'block';
+    sum.innerHTML = `<div class="result-grid">
+      <div class="result-card"><div class="result-num" style="color:var(--warn)">${data.total_groups}</div><div class="result-lbl">Duplikált csoport</div></div>
+      <div class="result-card"><div class="result-num" style="color:var(--danger)">${data.total_wasted}</div><div class="result-lbl">Felesleges hely</div></div>
+    </div>`;
+    let html = '';
+    data.groups.forEach((g, gi) => {
+      html += `<div class="dup-group">
+        <div class="dup-header" onclick="this.nextElementSibling.style.display=this.nextElementSibling.style.display==='none'?'block':'none'">
+          <span style="font-size:10px;color:var(--text2)">${g.files.length} azonos fájl</span>
+          <span class="dup-hash">${g.hash.substring(0,12)}…</span>
+          <span class="dup-waste">🗑 ${g.wasted}</span>
+        </div>
+        <div class="dup-files" style="display:none">
+          ${g.files.map((f,fi) => `<div class="dup-file">
+            <span style="font-size:9px;padding:1px 5px;background:${fi===0?'rgba(0,200,240,.15)':'rgba(255,62,94,.1)'};border-radius:2px;color:${fi===0?'var(--accent)':'var(--danger)'};flex-shrink:0">${fi===0?'ORIG':'MÁSOL'}</span>
+            <span class="dup-path" title="${f.path}">${f.path}</span>
+            <span class="dup-sz">${f.size_fmt}</span>
+            ${fi>0?`<button class="del-btn" onclick="deleteFile('${f.path.replace(/\\/g,'\\\\').replace(/'/g,"\\'")}',this.closest('.dup-file'))" title="Másolat törlése">🗑️</button>`:''}
+          </div>`).join('')}
+        </div>
+      </div>`;
+    });
+    document.getElementById('dupResults').innerHTML = html;
+    addLog(`Duplikátum keresés kész: ${data.total_groups} csoport, ${data.total_wasted} veszteség`, 'ok');
+    toast(`${data.total_groups} duplikált csoport — ${data.total_wasted} felesleges hely`, 'warn', 6000);
+  } catch(e) {
+    document.getElementById('dupResults').innerHTML = `<div style="color:var(--danger);padding:20px">Hiba: ${e}</div>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// REGISTRY
+// ═══════════════════════════════════════════════════════════
+async function runRegScan() {
+  document.getElementById('regStatus').style.display = 'none';
+  document.getElementById('regResults').innerHTML = '<div style="color:var(--text2);font-size:10px;padding:20px;animation:blink 1s infinite">🔍 Registry beolvasás...</div>';
+  const res = await fetch('/api/registry/scan');
+  const data = await res.json();
+  regIssues = data.issues || [];
+  document.getElementById('navReg').textContent = regIssues.length || '0';
+
+  if (!regIssues.length) {
+    document.getElementById('regResults').innerHTML = '<div style="padding:20px;color:var(--accent3);font-size:11px">✅ Nem találhatók registry problémák!</div>';
+    return;
+  }
+  if (data.system !== 'Windows') {
+    document.getElementById('regResults').innerHTML = `<div style="padding:20px;font-size:11px;color:var(--warn)">⚠️ Registry tisztítás csak Windows rendszeren elérhető (jelenlegi: ${data.system}).<br><br>Windows rendszeren ez a funkció az alábbi elemeket keresi:<br>• Hiányzó telepítési mappák<br>• Elavult autostart bejegyzések<br>• Felesleges MUI cache bejegyzések<br>• Régi dokumentum előzmények</div>`;
+    return;
+  }
+  document.getElementById('regCleanAllBtn').style.display = 'inline-flex';
+  const typeIco = { missing_install:'📦', startup_missing:'🚀', mui_cache:'🗂️', recent_docs:'📄', error:'❌', info:'ℹ️' };
+  const typeColor = { missing_install:'var(--warn)', startup_missing:'var(--danger)', mui_cache:'var(--accent2)', recent_docs:'var(--text2)' };
+  let html = '';
+  regIssues.forEach((issue, i) => {
+    const c = typeColor[issue.type] || 'var(--text2)';
+    html += `<div class="reg-item" id="reg-item-${i}">
+      <div class="reg-ico">${typeIco[issue.type]||'🔧'}</div>
+      <div class="reg-info">
+        <div class="reg-desc">${issue.description}</div>
+        <div class="reg-path" title="${issue.path}">${issue.path}</div>
+        ${issue.detail?`<div style="font-size:8px;color:var(--text2);margin-top:2px">${issue.detail}</div>`:''}
+      </div>
+      <span class="reg-type" style="color:${c};border-color:${c}40">${issue.type}</span>
+      ${issue.type!=='info'&&issue.type!=='error'?`<button class="btn btn-w btn-sm" onclick="cleanRegItem(${i})">Javít</button>`:''}
+    </div>`;
+  });
+  document.getElementById('regResults').innerHTML = html;
+  addLog(`Registry: ${regIssues.length} probléma`, regIssues.length > 0 ? 'warn' : 'ok');
+  toast(`Registry: ${regIssues.length} problémát találtam`, regIssues.length > 0 ? 'warn' : 'ok');
+}
+
+async function cleanRegItem(idx) {
+  const issue = regIssues[idx];
+  if (!confirm(`Javítod ezt a registry bejegyzést?\n\n${issue.description}\n${issue.path}`)) return;
+  const res = await fetch('/api/registry/clean', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path:issue.path, type:issue.type}) });
+  const d = await res.json();
+  if (d.ok) {
+    document.getElementById('reg-item-'+idx).remove();
+    toast('Registry bejegyzés javítva', 'ok');
+    addLog('Registry javítva: ' + issue.path, 'ok');
+  } else toast('Hiba a javítás során', 'err');
+}
+
+async function cleanAllRegistry() {
+  if (!confirm(`Javítod az összes (${regIssues.length}) registry problémát?`)) return;
+  for (let i = 0; i < regIssues.length; i++) {
+    await fetch('/api/registry/clean', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({path:regIssues[i].path, type:regIssues[i].type}) });
+    const el = document.getElementById('reg-item-'+i);
+    if (el) el.remove();
+  }
+  toast('Összes registry probléma javítva', 'ok');
+  addLog('Registry: összes javítva', 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════
+// SYSTEM INFO
+// ═══════════════════════════════════════════════════════════
 async function loadSysInfo() {
   const res = await fetch('/api/system_info');
   const d = await res.json();
-  document.getElementById('sysOS').textContent = d.os || '—';
-  document.getElementById('sysCPU').textContent = (d.processor || '—').substring(0, 30);
-  document.getElementById('sysHost').textContent = d.hostname || '—';
-  document.getElementById('sysDT').textContent = d.disk_total || '—';
-  document.getElementById('sysDU').textContent = d.disk_used || '—';
-  document.getElementById('sysDF').textContent = d.disk_free || '—';
+  document.getElementById('sysOS').textContent  = d.os || '—';
+  document.getElementById('sysCPU').textContent = d.processor || '—';
+  document.getElementById('sysHost').textContent= d.hostname || '—';
+  document.getElementById('sysDT').textContent  = d.disk_total || '—';
+  document.getElementById('sysDU').textContent  = d.disk_used  || '—';
+  document.getElementById('sysDF').textContent  = d.disk_free  || '—';
   document.getElementById('sysBadge').textContent = d.os || '—';
-  drawDonut(d.disk_pct || 0, d.disk_free, d.disk_used, d.disk_total);
+  drawDonut(d.disk_pct||0, d.disk_free, d.disk_used, d.disk_total);
 }
 
 function drawDonut(pct, free, used, total) {
   const c = document.getElementById('diskChart');
+  if (!c) return;
   const ctx = c.getContext('2d');
-  c.width = 110; c.height = 110;
-  const cx = 55, cy = 55, r = 44, lw = 11;
-
-  ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI*2);
-  ctx.strokeStyle = '#1a2535'; ctx.lineWidth = lw; ctx.stroke();
-
+  c.width=100; c.height=100;
+  const cx=50,cy=50,r=40,lw=10;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.strokeStyle='#1a2535'; ctx.lineWidth=lw; ctx.stroke();
   if (pct > 0) {
-    const g = ctx.createLinearGradient(0, 0, 110, 0);
-    g.addColorStop(0, '#00c8f0'); g.addColorStop(1, '#ff6b35');
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, -Math.PI/2, -Math.PI/2 + (pct/100)*Math.PI*2);
-    ctx.strokeStyle = g; ctx.lineWidth = lw; ctx.lineCap = 'round'; ctx.stroke();
+    const g = ctx.createLinearGradient(0,0,100,0);
+    g.addColorStop(0,'#00c8f0'); g.addColorStop(1,'#ff6b35');
+    ctx.beginPath(); ctx.arc(cx,cy,r,-Math.PI/2,-Math.PI/2+(pct/100)*Math.PI*2);
+    ctx.strokeStyle=g; ctx.lineWidth=lw; ctx.lineCap='round'; ctx.stroke();
   }
-
-  ctx.fillStyle = '#c0d0e0';
-  ctx.font = 'bold 15px Orbitron, monospace';
-  ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(pct + '%', cx, cy);
-
-  document.getElementById('diskLegend').innerHTML = `
-    <div class="leg-row"><div class="leg-dot" style="background:#1a2535;border:1px solid #243040"></div><div class="leg-lbl">Szabad</div><div class="leg-val">${free || '—'}</div></div>
-    <div class="leg-row"><div class="leg-dot" style="background:linear-gradient(90deg,#00c8f0,#ff6b35)"></div><div class="leg-lbl">Használt</div><div class="leg-val">${used || '—'}</div></div>
-    <div class="leg-row"><div class="leg-dot" style="background:var(--border2)"></div><div class="leg-lbl">Összesen</div><div class="leg-val">${total || '—'}</div></div>
-  `;
+  ctx.fillStyle='#c0d0e0'; ctx.font='bold 14px Orbitron,monospace';
+  ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(pct+'%',cx,cy);
+  document.getElementById('diskLegend').innerHTML=`
+    <div class="leg-row"><div class="leg-dot" style="background:#1a2535;border:1px solid #243040"></div><div class="leg-lbl">Szabad</div><div class="leg-val">${free||'—'}</div></div>
+    <div class="leg-row"><div class="leg-dot" style="background:linear-gradient(90deg,#00c8f0,#ff6b35)"></div><div class="leg-lbl">Használt</div><div class="leg-val">${used||'—'}</div></div>
+    <div class="leg-row"><div class="leg-dot" style="background:#243040"></div><div class="leg-lbl">Összesen</div><div class="leg-val">${total||'—'}</div></div>`;
 }
 
-// ---- HISTORY ----
+// ═══════════════════════════════════════════════════════════
+// SCHEDULE
+// ═══════════════════════════════════════════════════════════
+async function loadScheduleUI() {
+  const res = await fetch('/api/schedule');
+  const s = await res.json();
+  const tog = document.getElementById('schedToggle');
+  tog.classList.toggle('on', s.enabled);
+  document.getElementById('schedInterval').value = s.interval_hours || 24;
+  if (s.categories) {
+    ['temp','browser','logs','thumbnails'].forEach(c => {
+      const el = document.getElementById('scat-'+c);
+      if (el) el.checked = s.categories.includes(c);
+    });
+  }
+  document.getElementById('schedLastRun').textContent = s.last_run || 'Soha';
+  document.getElementById('navSched').textContent = s.enabled ? 'ON' : 'OFF';
+  document.getElementById('navSched').classList.toggle('ok', s.enabled);
+}
+
+function toggleSched() {
+  document.getElementById('schedToggle').classList.toggle('on');
+}
+
+async function saveSched() {
+  const cats = ['temp','browser','logs','thumbnails'].filter(c => {
+    const el = document.getElementById('scat-'+c); return el && el.checked;
+  });
+  const s = {
+    enabled: document.getElementById('schedToggle').classList.contains('on'),
+    interval_hours: parseInt(document.getElementById('schedInterval').value),
+    categories: cats,
+  };
+  await fetch('/api/schedule', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(s) });
+  toast('Ütemező beállítva', 'ok');
+  addLog('Ütemező: ' + (s.enabled ? 'bekapcsolva' : 'kikapcsolva'), 'info');
+  loadScheduleUI();
+}
+
+async function runNow() {
+  toast('Azonnali tisztítás indítva...', 'info');
+  const cats = ['temp','browser','logs','thumbnails'].filter(c => {
+    const el = document.getElementById('scat-'+c); return el && el.checked;
+  });
+  const res = await fetch('/api/clean', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({categories:cats, min_age_days:0}) });
+  const d = await res.json();
+  toast(`✅ ${d.total_freed} felszabadítva`, 'ok', 5000);
+  addLog('Azonnali futtatás kész: ' + d.total_freed, 'ok');
+}
+
+// ═══════════════════════════════════════════════════════════
+// BACKUPS
+// ═══════════════════════════════════════════════════════════
+async function loadBackups() {
+  const res = await fetch('/api/backups');
+  const data = await res.json();
+  document.getElementById('navBk').textContent = data.length;
+  const el = document.getElementById('backupList');
+  if (!data.length) { el.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text2);font-size:11px">Még nincs biztonsági mentés. Az első tisztítás után keletkeznek.</div>'; return; }
+  let html = data.map(b => `<div class="bk-row">
+    <div class="bk-name">📦 ${b.name}</div>
+    <div class="bk-date">${b.date}</div>
+    <div class="bk-sz">${b.size}</div>
+    <a href="${b.url}" class="btn btn-s btn-sm">⬇ Letölt</a>
+    <button class="btn btn-d btn-sm" onclick="deleteBackup('${b.name}')">🗑️</button>
+  </div>`).join('');
+  el.innerHTML = html;
+}
+
+async function deleteBackup(name) {
+  if (!confirm('Törlöd ezt a backupot?\n' + name)) return;
+  await fetch('/api/backups/delete', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({name}) });
+  toast('Backup törölve', 'ok');
+  loadBackups();
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORY
+// ═══════════════════════════════════════════════════════════
 async function loadHistory() {
   const res = await fetch('/api/history');
   const data = await res.json();
   document.getElementById('navHist').textContent = data.length;
-
   if (!data.length) {
-    document.getElementById('historyContent').innerHTML = '<div style="color:var(--text2);font-size:12px;padding:20px">Még nincs előzmény. Futtass egy tisztítást!</div>';
+    document.getElementById('histContent').innerHTML = '<div style="padding:20px;color:var(--text2);font-size:11px">Még nincs előzmény.</div>';
     return;
   }
-
-  let totalSaved = 0;
-  let html = '';
+  const totalFreed = data.reduce((a,e) => a + (e.total_freed_bytes||0), 0);
+  let html = `<div class="result-grid" style="margin-bottom:16px">
+    <div class="result-card"><div class="result-num" style="color:var(--accent)">${data.length}</div><div class="result-lbl">Összes tisztítás</div></div>
+    <div class="result-card"><div class="result-num" style="color:var(--accent3)">${fmtB(totalFreed)}</div><div class="result-lbl">Összes felszabadítva</div></div>
+    <div class="result-card"><div class="result-num" style="color:var(--warn)">${data.filter(e=>e.auto).length}</div><div class="result-lbl">Auto futtatás</div></div>
+  </div>`;
   data.forEach(e => {
-    totalSaved += e.total_freed_bytes || 0;
-    html += `
-      <div class="history-item">
-        <div>
-          <div class="hist-ts">${e.timestamp}</div>
-          <div class="hist-cats">${e.categories ? e.categories.join(', ') : '—'}</div>
-        </div>
-        <div><div class="hist-freed">${e.total_freed}</div></div>
-        <div><div class="hist-files" style="color:var(--accent)">${e.total_files} fájl</div>
-             <div class="hist-files">${e.total_errors} hiba</div></div>
-      </div>`;
-  });
-
-  // Summary card
-  const summaryHtml = `
-    <div class="grid-3" style="margin-bottom:16px">
-      <div class="card"><div class="card-hdr"><span class="card-lbl">Összes tisztítás</span><span class="card-ico">🧹</span></div>
-        <div class="stat">${data.length}</div></div>
-      <div class="card"><div class="card-hdr"><span class="card-lbl">Összes felszabadítva</span><span class="card-ico">💾</span></div>
-        <div class="stat" style="color:var(--accent3)">${fmtB(totalSaved)}</div></div>
-      <div class="card"><div class="card-hdr"><span class="card-lbl">Utolsó tisztítás</span><span class="card-ico">🕐</span></div>
-        <div class="stat" style="font-size:12px">${data[0]?.timestamp || '—'}</div></div>
+    const cats = (e.categories||[]).join(', ');
+    html += `<div class="hist-item">
+      <div><div class="hist-ts">${e.timestamp} ${e.auto?'⚙️ Auto':''}</div><div class="hist-cats">${cats}</div></div>
+      <div class="hist-freed">${e.total_freed}</div>
+      <div><div style="color:var(--accent);font-size:11px">${e.total_files} fájl</div>
+           ${e.backup?`<div style="font-size:8px;color:var(--accent3);margin-top:2px">💾 backup</div>`:''}
+      </div>
     </div>`;
-
-  document.getElementById('historyContent').innerHTML = summaryHtml + html;
+  });
+  document.getElementById('histContent').innerHTML = html;
 }
 
 async function clearHistory() {
   if (!confirm('Törlöd az összes előzményt?')) return;
   await fetch('/api/history/clear', {method:'POST'});
-  loadHistory();
-  addLog('Előzmények törölve', 'warn');
+  loadHistory(); toast('Előzmények törölve', 'info');
 }
 
-// ---- UTILS ----
+// ═══════════════════════════════════════════════════════════
+// CONFIG / SETTINGS
+// ═══════════════════════════════════════════════════════════
+async function loadConfig() {
+  const res = await fetch('/api/config');
+  _config = await res.json();
+  // Populate profile select
+  const sel = document.getElementById('profileSel');
+  sel.innerHTML = '';
+  Object.entries(_config.profiles||{}).forEach(([id, p]) => {
+    const opt = document.createElement('option');
+    opt.value = id; opt.textContent = p.name || id;
+    if (id === _config.active_profile) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  // Update custom dirs on cleaner page
+  const profile = _config.profiles[_config.active_profile] || {};
+  const dirs = profile.custom_dirs || [];
+  document.getElementById('customDirsDesc').textContent = dirs.length ? dirs.join(', ') : 'Nincs egyéni mappa — állítsd be a Beállításokban';
+}
+
+function loadSettingsUI() {
+  if (!_config) return;
+  const pid = _config.active_profile || 'default';
+  const profile = _config.profiles[pid] || {};
+  document.getElementById('cfgProfileName').value = profile.name || '';
+  document.getElementById('cfgPassword').value = '';
+  document.getElementById('cfgBackupMB').value = profile.backup_max_mb || 200;
+  const ab = document.getElementById('cfgAutoBackup');
+  if (profile.auto_backup !== false) ab.classList.add('on'); else ab.classList.remove('on');
+  // Custom dirs
+  renderCustomDirs(profile.custom_dirs || []);
+}
+
+let _customDirs = [];
+function renderCustomDirs(dirs) {
+  _customDirs = [...dirs];
+  const container = document.getElementById('customDirTags');
+  container.innerHTML = _customDirs.map((d,i) => `
+    <span class="dir-tag">${d}<span class="rm" onclick="removeDir(${i})">✕</span></span>`).join('');
+}
+function removeDir(i) { _customDirs.splice(i,1); renderCustomDirs(_customDirs); }
+function addCustomDir() {
+  const val = document.getElementById('newDirInput').value.trim();
+  if (val && !_customDirs.includes(val)) {
+    _customDirs.push(val); renderCustomDirs(_customDirs);
+    document.getElementById('newDirInput').value = '';
+  }
+}
+
+async function saveSettings() {
+  const name = document.getElementById('cfgProfileName').value;
+  const pw   = document.getElementById('cfgPassword').value;
+  const bmb  = parseInt(document.getElementById('cfgBackupMB').value);
+  const ab   = document.getElementById('cfgAutoBackup').classList.contains('on');
+  const update = { name, backup_max_mb: bmb, auto_backup: ab, custom_dirs: _customDirs };
+  if (pw && pw !== '***') update.password = pw;
+  await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({profile_update: update}) });
+  toast('Beállítások mentve', 'ok'); addLog('Beállítások mentve', 'ok');
+  await loadConfig();
+}
+
+async function createProfile() {
+  const name = document.getElementById('newProfileName').value.trim();
+  if (!name) return;
+  const id = name.toLowerCase().replace(/\s+/g,'_').replace(/[^\w]/g,'');
+  await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({new_profile:{id, name}}) });
+  toast('Új profil: ' + name, 'ok');
+  document.getElementById('newProfileName').value = '';
+  await loadConfig(); loadSettingsUI();
+}
+
+async function deleteProfile() {
+  if (!confirm('Törlöd az aktív profilt? (az "default" nem törölhető)')) return;
+  await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({delete_profile: _config.active_profile}) });
+  toast('Profil törölve', 'info'); await loadConfig(); loadSettingsUI();
+}
+
+async function switchProfile(id) {
+  const cfg = await (await fetch('/api/config')).json();
+  const profile = cfg.profiles[id] || {};
+  if (profile.password && profile.password !== '') {
+    document.getElementById('pwModal').classList.add('visible');
+    document.getElementById('pwModal').dataset.profile = id;
+  } else {
+    await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({active_profile: id}) });
+    await loadConfig(); toast('Profil: ' + (profile.name||id), 'info');
+  }
+}
+
+async function submitPassword() {
+  const id  = document.getElementById('pwModal').dataset.profile;
+  const pwd = document.getElementById('pwInput').value;
+  const res = await fetch('/api/config/verify_password', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({profile_id: id, password: pwd}) });
+  const d = await res.json();
+  if (d.ok) {
+    await fetch('/api/config', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({active_profile: id}) });
+    closePwModal(); await loadConfig(); toast('Belépés sikeres', 'ok');
+  } else { toast('Helytelen jelszó!', 'err'); document.getElementById('pwInput').value = ''; }
+}
+
+function closePwModal() {
+  document.getElementById('pwModal').classList.remove('visible');
+  document.getElementById('pwInput').value = '';
+}
+
+document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword(); });
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
 function fmtB(n) {
   if (!n) return '0 B';
   if (n < 1024) return n + ' B';
@@ -902,13 +1523,6 @@ function fmtB(n) {
   if (n < 1024**3) return (n/1024**2).toFixed(1) + ' MB';
   return (n/1024**3).toFixed(2) + ' GB';
 }
-
-// Set default large files path
-document.getElementById('lfPath').value = navigator.platform.includes('Win') ? 
-  'C:\\Users\\' + (document.title || 'user') : '~';
-
-// Init
-loadSysInfo();
 </script>
 </body>
 </html>

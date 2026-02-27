@@ -1,39 +1,23 @@
-# PyCleaner — Python CCleaner-klón
+# PyCleaner v3.0
 
 ## Telepítés
-
 ```bash
-pip install flask
-```
-
-## Indítás
-
-```bash
+pip install flask psutil
 python app.py
 ```
+Böngésző: **http://localhost:5000**
 
-Ezután nyisd meg a böngészőben: **http://localhost:5000**
-
----
-
-## Funkciók
-
+## Új funkciók v3.0-ban
 | Funkció | Leírás |
 |---|---|
-| 🧹 **Ideiglenes fájlok törlése** | Temp mappák (%TEMP%, /tmp) |
-| 🌐 **Böngésző gyorsítótár** | Chrome, Firefox, Edge cache |
-| 📄 **Log fájlok törlése** | .log, .old, .bak fájlok |
-| 🗑️ **Lomtár ürítése** | Recycle Bin / ~/.Trash |
-| 📊 **Lemez elemző** | Mappák méretének vizualizációja |
-| 🖥️ **Rendszerinformáció** | OS, lemezhasználat, donut chart |
-| 📋 **Eseménynapló** | Minden művelet naplózva |
-
-## Kompatibilitás
-
-- **Windows** ✅ — Temp, %LOCALAPPDATA%, Edge/Chrome/Firefox, Lomtár
-- **Linux** ✅ — /tmp, ~/.cache, Firefox/Chrome, ~/.Trash
-- **macOS** ✅ — /tmp, ~/Library/Caches, ~/.Trash
-
-## Figyelem
-
-A "Tisztítás" gomb **véglegesen törli** a kiválasztott fájlokat. A lomtár ürítése előtt győződj meg róla, hogy nincs szükséged a benne lévő fájlokra!
+| 📡 Élő monitor | CPU, RAM, Swap, Disk, Hálózat, top folyamatok (SSE) |
+| 👥 Duplikált fájlok | MD5-alapú keresés, egyenként törölhető |
+| 🗝️ Registry tisztítás | Hiányzó telepítők, autostart, MUI cache |
+| ⏰ Ütemező | Automatikus tisztítás háttérszálon, beállítható intervallum |
+| 💾 Backup | Törlés előtt automatikus ZIP mentés |
+| 🌙 Téma | Sötét/világos váltó |
+| 👤 Profilok | Több felhasználói profil, jelszóvédelem |
+| 📊 Export | HTML riport, JSON export |
+| 🎬 Animáció | Animált takarítás effekt |
+| 🔔 Toast értesítések | Minden művelethez pop-up visszajelzés |
+| 🗑️ Fájl törlés | Nagy fájlok és duplikátumok törlése kattintásra |
