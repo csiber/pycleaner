@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PyCleaner — Rendszertisztító</title>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/png" href="/favicon-96x96.png" sizes="96x96" />
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="shortcut icon" href="/favicon.ico" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+  <link rel="manifest" href="/site.webmanifest" />
+  <style>
+    :root {
+      --bg: #0a0c10;
+      --surface: #0f1318;
+      --surface2: #151b24;
+      --border: #1e2d3d;
+      --accent: #00d4ff;
+      --accent2: #ff6b35;
+      --accent3: #7fff6e;
+      --danger: #ff3e5e;
+      --warn: #ffb830;
+      --text: #c8d6e5;
+      --text2: #5f7c99;
+      --glow: 0 0 20px rgba(0,212,255,0.25);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'IBM Plex Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Background grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image: 
+        linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .app {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      grid-template-rows: 64px 1fr;
+      min-height: 100vh;
+    }
+
+    /* Header */
+    header {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      background: rgba(10,12,16,0.95);
+      border-bottom: 1px solid var(--border);
+      gap: 16px;
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 20px;
+      font-weight: 900;
+      color: var(--accent);
+      letter-spacing: 3px;
+      text-shadow: var(--glow);
+    }
+
+    .logo span { color: var(--accent2); }
+
+    .header-badge {
+      font-size: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #000;
+      padding: 2px 8px;
+      border-radius: 2px;
+      font-weight: 600;
+      letter-spacing: 1px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .sys-info-badge {
+      font-size: 11px;
+      color: var(--text2);
+      padding: 4px 12px;
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      background: var(--surface);
+    }
+
+    /* Sidebar */
+    nav {
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .nav-section {
+      padding: 8px 16px 4px;
+      font-size: 9px;
+      letter-spacing: 2px;
+      color: var(--text2);
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 20px;
+      cursor: pointer;
+      transition: all 0.15s;
+      border-left: 3px solid transparent;
+      font-size: 12px;
+      color: var(--text2);
+      user-select: none;
+    }
+
+    .nav-item:hover {
+      background: rgba(0,212,255,0.05);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(0,212,255,0.08);
+      border-left-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .nav-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    .nav-badge {
+      margin-left: auto;
+      font-size: 9px;
+      padding: 1px 6px;
+      border-radius: 2px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text2);
+    }
+
+    .nav-badge.warn { border-color: var(--warn); color: var(--warn); }
+    .nav-badge.ok { border-color: var(--accent3); color: var(--accent3); }
+
+    .nav-divider {
+      height: 1px;
+      background: var(--border);
+      margin: 10px 16px;
+    }
+
+    /* Main content */
+    main {
+      padding: 28px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    /* Page sections */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    .page-title {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .page-subtitle {
+      font-size: 11px;
+      color: var(--text2);
+      margin-bottom: 28px;
+      letter-spacing: 1px;
+    }
+
+    /* Cards */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 24px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .card:hover { border-color: rgba(0,212,255,0.3); }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      color: var(--text2);
+      text-transform: uppercase;
+    }
+
+    .card-icon { font-size: 20px; }
+
+    .stat-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .stat-sub {
+      font-size: 11px;
+      color: var(--text2);
+      margin-top: 4px;
+    }
+
+    /* Cleaner items */
+    .cleaner-items { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
+
+    .cleaner-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+
+    .cleaner-item:hover { border-color: rgba(0,212,255,0.3); background: var(--surface2); }
+    .cleaner-item.selected { border-color: var(--accent); background: rgba(0,212,255,0.06); }
+
+    .cleaner-checkbox {
+      width: 18px;
+      height: 18px;
+      border: 2px solid var(--border);
+      border-radius: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: all 0.15s;
+      font-size: 12px;
+    }
+
+    .cleaner-item.selected .cleaner-checkbox {
+      border-color: var(--accent);
+      background: var(--accent);
+      color: #000;
+    }
+
+    .cleaner-info { flex: 1 }
+
+    .cleaner-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 3px;
+    }
+
+    .cleaner-desc { font-size: 11px; color: var(--text2); }
+
+    .cleaner-size {
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    .size-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 14px;
+      color: var(--accent2);
+    }
+
+    .size-sub { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+    .size-scanning {
+      font-size: 11px;
+      color: var(--text2);
+      animation: pulse 1.2s infinite;
+    }
+
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 22px;
+      border: none;
+      border-radius: 3px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-transform: uppercase;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #000;
+    }
+    .btn-primary:hover { background: #33ddff; box-shadow: 0 0 20px rgba(0,212,255,0.4); }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #ff5e75; box-shadow: 0 0 20px rgba(255,62,94,0.4); }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--text2);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { border-color: var(--text2); color: var(--text); }
+
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .action-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+
+    .action-bar .total-info {
+      margin-left: auto;
+      text-align: right;
+    }
+
+    .action-bar .total-label { font-size: 10px; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; }
+    .action-bar .total-value {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 18px;
+      color: var(--accent2);
+    }
+
+    /* Progress / Result */
+    .progress-wrap {
+      display: none;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 20px;
+      margin-top: 16px;
+    }
+
+    .progress-wrap.visible { display: block; }
+
+    .progress-bar-bg {
+      width: 100%;
+      height: 4px;
+      background: var(--border);
+      border-radius: 2px;
+      margin: 12px 0;
+      overflow: hidden;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      transition: width 0.4s;
+      width: 0%;
+    }
+
+    .progress-bar-fill.indeterminate {
+      width: 40%;
+      animation: slide 1.2s linear infinite;
+    }
+
+    @keyframes slide {
+      0% { transform: translateX(-100%) }
+      100% { transform: translateX(350%) }
+    }
+
+    .result-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 16px; }
+
+    .result-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 14px;
+      text-align: center;
+    }
+
+    .result-num {
+      font-family: 'Orbitron', sans-serif;
+      font-size: 22px;
+      font-weight: 700;
+    }
+
+    .result-label { font-size: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* Disk usage bars */
+    .disk-item {
+      display: grid;
+      grid-template-columns: 140px 1fr 80px;
+      align-items: center;
+      gap: 14px;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(30,45,61,0.5);
+    }
+
+    .disk-item:last-child { border-bottom: none; }
+
+    .disk-name { font-size: 12px; color: var(--text); }
+    .disk-path { font-size: 10px; color: var(--text2); margin-top: 2px; }
+
+    .disk-bar-bg {
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .disk-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 3px;
+      transition: width 0.6s;
+    }
+
+    .disk-size-right { text-align: right; font-size: 11px; color: var(--accent2); font-weight: 600; }
+
+    /* System donut */
+    .disk-overview {
+      display: flex;
+      gap: 28px;
+      align-items: center;
+      padding: 20px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      margin-bottom: 20px;
+    }
+
+    canvas#diskChart { width: 120px !important; height: 120px !important; }
+
+    .disk-legend { display: flex; flex-direction: column; gap: 10px; flex: 1; }
+
+    .legend-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .legend-label { color: var(--text2); flex: 1 }
+    .legend-value { color: var(--text); font-weight: 600; }
+
+    /* Notifications / log */
+    .log-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 16px;
+      font-size: 11px;
+      max-height: 200px;
+      overflow-y: auto;
+      line-height: 1.8;
+    }
+
+    .log-line { color: var(--text2); }
+    .log-line.ok { color: var(--accent3); }
+    .log-line.error { color: var(--danger); }
+    .log-line.info { color: var(--accent); }
+
+    /* scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--surface); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--text2); }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; grid-template-rows: auto; }
+      nav { display: flex; flex-direction: row; border-right: none; border-bottom: 1px solid var(--border); padding: 0; overflow-x: auto; }
+      .nav-item { padding: 12px 14px; border-left: none; border-bottom: 3px solid transparent; white-space: nowrap; }
+      .nav-item.active { border-left-color: transparent; border-bottom-color: var(--accent); }
+      .nav-section { display: none; }
+      .nav-divider { display: none; }
+      .nav-badge { display: none; }
+      .grid-3 { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Header -->
+  <header>
+    <div class="logo">Py<span>Cleaner</span></div>
+    <div class="header-badge">v1.0</div>
+    <div class="header-right">
+      <div class="sys-info-badge" id="sysInfoBadge">Betöltés...</div>
+    </div>
+  </header>
+
+  <!-- Sidebar nav -->
+  <nav>
+    <div class="nav-section">Eszközök</div>
+    <div class="nav-item active" data-page="cleaner">
+      <span class="nav-icon">🧹</span> Tisztító
+      <span class="nav-badge warn" id="navCleanerBadge">—</span>
+    </div>
+    <div class="nav-item" data-page="analyzer">
+      <span class="nav-icon">📊</span> Lemez elemző
+    </div>
+    <div class="nav-divider"></div>
+    <div class="nav-section">Rendszer</div>
+    <div class="nav-item" data-page="system">
+      <span class="nav-icon">🖥️</span> Rendszerinfo
+      <span class="nav-badge ok" id="navDiskBadge">—</span>
+    </div>
+    <div class="nav-item" data-page="log">
+      <span class="nav-icon">📋</span> Eseménynapló
+    </div>
+  </nav>
+
+  <!-- Main -->
+  <main>
+
+    <!-- ====== CLEANER PAGE ====== -->
+    <div class="page active" id="page-cleaner">
+      <div class="page-title">Rendszertisztító</div>
+      <div class="page-subtitle">Válaszd ki a törölni kívánt elemeket, majd kattints a "Beolvasás" gombra</div>
+
+      <div class="cleaner-items" id="cleanerItems">
+        <div class="cleaner-item selected" data-category="temp">
+          <div class="cleaner-checkbox">✓</div>
+          <div class="cleaner-info">
+            <div class="cleaner-name">🗂️ Ideiglenes fájlok</div>
+            <div class="cleaner-desc">Windows Temp, %LOCALAPPDATA%\Temp, /tmp mappák</div>
+          </div>
+          <div class="cleaner-size">
+            <div class="size-value" id="size-temp">—</div>
+            <div class="size-sub" id="files-temp">—</div>
+          </div>
+        </div>
+        <div class="cleaner-item selected" data-category="browser">
+          <div class="cleaner-checkbox">✓</div>
+          <div class="cleaner-info">
+            <div class="cleaner-name">🌐 Böngésző gyorsítótár</div>
+            <div class="cleaner-desc">Chrome, Firefox, Edge gyorsítótár és cookie fájlok</div>
+          </div>
+          <div class="cleaner-size">
+            <div class="size-value" id="size-browser">—</div>
+            <div class="size-sub" id="files-browser">—</div>
+          </div>
+        </div>
+        <div class="cleaner-item selected" data-category="logs">
+          <div class="cleaner-checkbox">✓</div>
+          <div class="cleaner-info">
+            <div class="cleaner-name">📄 Log fájlok</div>
+            <div class="cleaner-desc">Rendszer és alkalmazás log fájlok (.log, .old, .bak)</div>
+          </div>
+          <div class="cleaner-size">
+            <div class="size-value" id="size-logs">—</div>
+            <div class="size-sub" id="files-logs">—</div>
+          </div>
+        </div>
+        <div class="cleaner-item" data-category="trash">
+          <div class="cleaner-checkbox"></div>
+          <div class="cleaner-info">
+            <div class="cleaner-name">🗑️ Lomtár</div>
+            <div class="cleaner-desc">Lomtárban lévő fájlok végleges törlése</div>
+          </div>
+          <div class="cleaner-size">
+            <div class="size-value" id="size-trash">—</div>
+            <div class="size-sub" id="files-trash">—</div>
+          </div>
+        </div>
+        <div class="cleaner-item" data-category="downloads">
+          <div class="cleaner-checkbox"></div>
+          <div class="cleaner-info">
+            <div class="cleaner-name">⬇️ Letöltések mappa</div>
+            <div class="cleaner-desc">~/Downloads mappa elemzése (nem törli automatikusan)</div>
+          </div>
+          <div class="cleaner-size">
+            <div class="size-value" id="size-downloads">—</div>
+            <div class="size-sub" id="files-downloads">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="action-bar">
+        <button class="btn btn-secondary" onclick="runScan()">🔍 Beolvasás</button>
+        <button class="btn btn-danger" id="cleanBtn" onclick="runClean()" disabled>⚡ Tisztítás</button>
+        <button class="btn btn-secondary" onclick="selectAll()">Összes kijelölés</button>
+        <button class="btn btn-secondary" onclick="selectNone()">Kijelölés törlése</button>
+        <div class="total-info">
+          <div class="total-label">Felszabadítható</div>
+          <div class="total-value" id="totalFreeableDisplay">—</div>
+        </div>
+      </div>
+
+      <div class="progress-wrap" id="progressWrap">
+        <div style="font-size:12px; color:var(--text2)" id="progressLabel">Beolvasás...</div>
+        <div class="progress-bar-bg"><div class="progress-bar-fill indeterminate" id="progressFill"></div></div>
+        <div id="resultArea"></div>
+      </div>
+
+      <div style="margin-top:16px">
+        <div class="log-box" id="cleanerLog">
+          <div class="log-line info">[ PyCleaner ] Kész. Kattints a "Beolvasás" gombra az elemzés indításához.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== ANALYZER PAGE ====== -->
+    <div class="page" id="page-analyzer">
+      <div class="page-title">Lemez Elemző</div>
+      <div class="page-subtitle">A felhasználói mappák mérete és aránya</div>
+
+      <div id="analyzerContent">
+        <div style="text-align:center;padding:40px;color:var(--text2)">
+          <div style="font-size:32px;margin-bottom:12px">📊</div>
+          <div>Kattints az "Elemzés indítása" gombra</div>
+        </div>
+      </div>
+      <div style="margin-top:16px">
+        <button class="btn btn-primary" onclick="runAnalyzer()">📊 Elemzés indítása</button>
+      </div>
+    </div>
+
+    <!-- ====== SYSTEM PAGE ====== -->
+    <div class="page" id="page-system">
+      <div class="page-title">Rendszerinformáció</div>
+      <div class="page-subtitle">Az aktuális rendszer állapota és lemezhasználat</div>
+
+      <div class="disk-overview" id="diskOverview">
+        <canvas id="diskChart"></canvas>
+        <div class="disk-legend" id="diskLegend">
+          <div style="color:var(--text2);font-size:12px">Betöltés...</div>
+        </div>
+      </div>
+
+      <div class="grid-3" id="sysCards">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Operációs rendszer</span><span class="card-icon">🖥️</span></div>
+          <div class="stat-value" id="sysOS" style="font-size:14px">—</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Hostnév</span><span class="card-icon">🔌</span></div>
+          <div class="stat-value" id="sysHost" style="font-size:14px">—</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Python verzió</span><span class="card-icon">🐍</span></div>
+          <div class="stat-value" id="sysPython" style="font-size:14px">—</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Lemez összesen</span><span class="card-icon">💾</span></div>
+          <div class="stat-value" id="sysDiskTotal">—</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Felhasznált</span><span class="card-icon">📈</span></div>
+          <div class="stat-value" id="sysDiskUsed" style="color:var(--accent2)">—</div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Szabad hely</span><span class="card-icon">✅</span></div>
+          <div class="stat-value" id="sysDiskFree" style="color:var(--accent3)">—</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== LOG PAGE ====== -->
+    <div class="page" id="page-log">
+      <div class="page-title">Eseménynapló</div>
+      <div class="page-subtitle">PyCleaner műveletek naplója</div>
+      <div class="card">
+        <div class="log-box" id="eventLog" style="max-height:500px">
+          <div class="log-line info">[ PyCleaner ] Eseménynapló elindult.</div>
+        </div>
+      </div>
+      <div style="margin-top:12px">
+        <button class="btn btn-secondary" onclick="clearLog()">🗑️ Napló törlése</button>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ---- NAV ----
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', () => {
+      document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      item.classList.add('active');
+      document.getElementById('page-' + item.dataset.page).classList.add('active');
+      if (item.dataset.page === 'system') loadSystemInfo();
+    });
+  });
+
+  // ---- CHECKBOX SELECT ----
+  document.querySelectorAll('.cleaner-item').forEach(item => {
+    item.addEventListener('click', () => {
+      item.classList.toggle('selected');
+      const cb = item.querySelector('.cleaner-checkbox');
+      cb.textContent = item.classList.contains('selected') ? '✓' : '';
+    });
+  });
+
+  function selectAll() {
+    document.querySelectorAll('.cleaner-item').forEach(item => {
+      item.classList.add('selected');
+      item.querySelector('.cleaner-checkbox').textContent = '✓';
+    });
+  }
+
+  function selectNone() {
+    document.querySelectorAll('.cleaner-item').forEach(item => {
+      item.classList.remove('selected');
+      item.querySelector('.cleaner-checkbox').textContent = '';
+    });
+  }
+
+  function getSelected() {
+    return [...document.querySelectorAll('.cleaner-item.selected')].map(i => i.dataset.category);
+  }
+
+  // ---- LOG ----
+  const logs = [];
+  function addLog(msg, type = '') {
+    const line = document.createElement('div');
+    line.className = 'log-line ' + type;
+    line.textContent = `[${new Date().toLocaleTimeString('hu-HU')}] ${msg}`;
+    document.getElementById('cleanerLog').appendChild(line);
+    document.getElementById('cleanerLog').scrollTop = 9999;
+    // also event log
+    const line2 = line.cloneNode(true);
+    document.getElementById('eventLog').appendChild(line2);
+    document.getElementById('eventLog').scrollTop = 9999;
+  }
+
+  function clearLog() {
+    document.getElementById('eventLog').innerHTML = '<div class="log-line info">[ Napló törölve ]</div>';
+  }
+
+  // ---- SCAN ----
+  let scanData = null;
+
+  async function runScan() {
+    const pw = document.getElementById('progressWrap');
+    pw.classList.add('visible');
+    document.getElementById('progressLabel').textContent = 'Beolvasás folyamatban...';
+    document.getElementById('progressFill').className = 'progress-bar-fill indeterminate';
+    document.getElementById('resultArea').innerHTML = '';
+    document.getElementById('cleanBtn').disabled = true;
+    addLog('Beolvasás indítva...', 'info');
+
+    // Set scanning state
+    ['temp','browser','logs','trash','downloads'].forEach(cat => {
+      document.getElementById('size-' + cat).innerHTML = '<span class="size-scanning">...</span>';
+      document.getElementById('files-' + cat).textContent = 'elemzés...';
+    });
+
+    const res = await fetch('/api/scan', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({category: 'all'})
+    });
+    scanData = await res.json();
+
+    let totalFreeable = 0;
+    const cats = ['temp','browser','logs','trash','downloads'];
+    cats.forEach(cat => {
+      if (scanData[cat]) {
+        const d = scanData[cat];
+        document.getElementById('size-' + cat).textContent = d.size_fmt;
+        document.getElementById('files-' + cat).textContent = `${d.files} fájl`;
+        if (document.querySelector(`[data-category="${cat}"].selected`)) {
+          totalFreeable += d.size;
+        }
+      }
+    });
+
+    document.getElementById('totalFreeableDisplay').textContent = fmtBytes(totalFreeable);
+    document.getElementById('navCleanerBadge').textContent = fmtBytes(totalFreeable);
+    if (scanData.disk) {
+      document.getElementById('navDiskBadge').textContent = scanData.disk.used_pct + '%';
+    }
+
+    document.getElementById('progressFill').className = 'progress-bar-fill';
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressLabel').textContent = '✅ Beolvasás kész';
+    document.getElementById('cleanBtn').disabled = false;
+    addLog('Beolvasás kész. Felszabadítható: ' + fmtBytes(totalFreeable), 'ok');
+  }
+
+  // ---- CLEAN ----
+  async function runClean() {
+    const selected = getSelected();
+    if (!selected.length) { addLog('Nincs kiválasztott elem!', 'error'); return; }
+
+    if (!confirm(`Biztosan törölni szeretnéd a kiválasztott elemeket? (${selected.length} kategória)\n\nEz a művelet NEM vonható vissza!`)) return;
+
+    document.getElementById('cleanBtn').disabled = true;
+    const pw = document.getElementById('progressWrap');
+    pw.classList.add('visible');
+    document.getElementById('progressLabel').textContent = 'Tisztítás folyamatban...';
+    document.getElementById('progressFill').className = 'progress-bar-fill indeterminate';
+    document.getElementById('resultArea').innerHTML = '';
+    addLog('Tisztítás indítva: ' + selected.join(', '), 'info');
+
+    const res = await fetch('/api/clean', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({categories: selected})
+    });
+    const data = await res.json();
+
+    document.getElementById('progressFill').className = 'progress-bar-fill';
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressLabel').textContent = '✅ Tisztítás befejezve!';
+
+    // Results
+    const resultHtml = `
+      <div class="result-grid">
+        <div class="result-card">
+          <div class="result-num" style="color:var(--accent3)">${data.total_freed}</div>
+          <div class="result-label">Felszabadítva</div>
+        </div>
+        <div class="result-card">
+          <div class="result-num" style="color:var(--accent)">${data.total_files}</div>
+          <div class="result-label">Törölt elem</div>
+        </div>
+        <div class="result-card">
+          <div class="result-num" style="color:${data.total_errors > 0 ? 'var(--danger)' : 'var(--accent3)'}">${data.total_errors}</div>
+          <div class="result-label">Hiba</div>
+        </div>
+      </div>
+      <div style="margin-top:14px;font-size:11px;color:var(--text2)">
+        ${data.details.map(d => `<div>• ${d.category}: ${d.files} elem, ${d.freed}</div>`).join('')}
+      </div>
+    `;
+    document.getElementById('resultArea').innerHTML = resultHtml;
+    addLog(`Kész! Felszabadítva: ${data.total_freed}, törölt: ${data.total_files}, hiba: ${data.total_errors}`, 'ok');
+
+    // Rescan sizes
+    setTimeout(runScan, 500);
+  }
+
+  // ---- ANALYZER ----
+  async function runAnalyzer() {
+    document.getElementById('analyzerContent').innerHTML = '<div style="color:var(--text2);font-size:12px;padding:20px">Elemzés folyamatban...</div>';
+    const res = await fetch('/api/disk_usage');
+    const data = await res.json();
+
+    if (!data.length) {
+      document.getElementById('analyzerContent').innerHTML = '<div style="color:var(--text2);padding:20px">Nem találhatók mappák.</div>';
+      return;
+    }
+
+    const maxSize = data[0].size;
+    let html = '<div class="card">';
+    data.forEach(item => {
+      const pct = maxSize > 0 ? (item.size / maxSize * 100) : 0;
+      html += `
+        <div class="disk-item">
+          <div>
+            <div class="disk-name">${item.name}</div>
+            <div class="disk-path">${item.path}</div>
+          </div>
+          <div class="disk-bar-bg">
+            <div class="disk-bar-fill" style="width:${pct}%"></div>
+          </div>
+          <div class="disk-size-right">${item.size_fmt}</div>
+        </div>
+      `;
+    });
+    html += '</div>';
+    document.getElementById('analyzerContent').innerHTML = html;
+    addLog('Lemez elemzés kész', 'ok');
+  }
+
+  // ---- SYSTEM INFO ----
+  async function loadSystemInfo() {
+    const res = await fetch('/api/system_info');
+    const d = await res.json();
+    document.getElementById('sysOS').textContent = d.os || '—';
+    document.getElementById('sysHost').textContent = d.hostname || '—';
+    document.getElementById('sysPython').textContent = d.python || '—';
+    document.getElementById('sysDiskTotal').textContent = d.disk_total || '—';
+    document.getElementById('sysDiskUsed').textContent = d.disk_used || '—';
+    document.getElementById('sysDiskFree').textContent = d.disk_free || '—';
+    document.getElementById('sysInfoBadge').textContent = d.os || '—';
+
+    // Draw donut
+    drawDonut(d.disk_pct || 0, d.disk_free || '—', d.disk_used || '—', d.disk_total || '—');
+  }
+
+  function drawDonut(usedPct, free, used, total) {
+    const canvas = document.getElementById('diskChart');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 120; canvas.height = 120;
+    const cx = 60, cy = 60, r = 50, lw = 12;
+
+    // BG arc
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = '#1e2d3d';
+    ctx.lineWidth = lw;
+    ctx.stroke();
+
+    // Used arc
+    const startAngle = -Math.PI / 2;
+    const endAngle = startAngle + (usedPct / 100) * Math.PI * 2;
+    const grad = ctx.createLinearGradient(0, 0, 120, 0);
+    grad.addColorStop(0, '#00d4ff');
+    grad.addColorStop(1, '#ff6b35');
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, startAngle, endAngle);
+    ctx.strokeStyle = grad;
+    ctx.lineWidth = lw;
+    ctx.lineCap = 'round';
+    ctx.stroke();
+
+    // Center text
+    ctx.fillStyle = '#c8d6e5';
+    ctx.font = 'bold 16px Orbitron, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(usedPct + '%', cx, cy + 6);
+
+    document.getElementById('diskLegend').innerHTML = `
+      <div class="legend-row"><div class="legend-dot" style="background:#00d4ff"></div><div class="legend-label">Szabad</div><div class="legend-value">${free}</div></div>
+      <div class="legend-row"><div class="legend-dot" style="background:#ff6b35"></div><div class="legend-label">Használt</div><div class="legend-value">${used}</div></div>
+      <div class="legend-row"><div class="legend-dot" style="background:#1e2d3d"></div><div class="legend-label">Összesen</div><div class="legend-value">${total}</div></div>
+    `;
+  }
+
+  function fmtBytes(b) {
+    if (b < 1024) return b + ' B';
+    if (b < 1024**2) return (b/1024).toFixed(1) + ' KB';
+    if (b < 1024**3) return (b/1024**2).toFixed(1) + ' MB';
+    return (b/1024**3).toFixed(2) + ' GB';
+  }
+
+  // Init
+  loadSystemInfo();
+</script>
+</body>
+</html>
