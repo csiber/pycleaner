@@ -1,17 +1,31 @@
-from flask import Flask, render_template, jsonify, request
+from flask import Flask, render_template, jsonify, request, send_from_directory
 import os
 import shutil
-import glob
 import platform
 import subprocess
 import stat
 import time
+import json
 from pathlib import Path
 import tempfile
+from datetime import datetime
 
 app = Flask(__name__)
-
 SYSTEM = platform.system()
+
+# ---- Static / Favicon ----
+@app.route('/favicon.ico')
+def favicon():
+    return send_from_directory(
+        os.path.join(app.root_path, 'static'),
+        'favicon.ico', mimetype='image/vnd.microsoft.icon'
+    )
+
+@app.route('/static/<path:filename>')
+def static_files(filename):
+    return send_from_directory(os.path.join(app.root_path, 'static'), filename)
+
+# ---- Helpers ----
 
 def get_temp_dirs():
     dirs = [tempfile.gettempdir()]
@@ -20,23 +34,29 @@ def get_temp_dirs():
             os.path.expandvars(r"%TEMP%"),
             os.path.expandvars(r"%TMP%"),
             os.path.expandvars(r"%LOCALAPPDATA%\Temp"),
+            os.path.expandvars(r"%WINDIR%\Temp"),
         ]
     elif SYSTEM == "Linux":
-        dirs += ["/tmp", "/var/tmp", os.path.expanduser("~/.cache")]
+        dirs += ["/tmp", "/var/tmp", os.path.expanduser("~/.cache/thumbnails")]
     elif SYSTEM == "Darwin":
-        dirs += ["/tmp", "/var/folders", os.path.expanduser("~/Library/Caches")]
-    return list(set(dirs))
+        dirs += ["/tmp", os.path.expanduser("~/Library/Caches")]
+    return list(set([d for d in dirs if os.path.exists(d)]))
 
 def get_browser_cache_dirs():
     home = os.path.expanduser("~")
     dirs = []
     if SYSTEM == "Windows":
         local = os.path.expandvars("%LOCALAPPDATA%")
+        roaming = os.path.expandvars("%APPDATA%")
         dirs = [
             os.path.join(local, "Google", "Chrome", "User Data", "Default", "Cache"),
             os.path.join(local, "Google", "Chrome", "User Data", "Default", "Code Cache"),
+            os.path.join(local, "Google", "Chrome", "User Data", "Default", "GPUCache"),
             os.path.join(local, "Mozilla", "Firefox", "Profiles"),
+            os.path.join(roaming, "Mozilla", "Firefox", "Profiles"),
             os.path.join(local, "Microsoft", "Edge", "User Data", "Default", "Cache"),
+            os.path.join(local, "Microsoft", "Edge", "User Data", "Default", "Code Cache"),
+            os.path.join(local, "BraveSoftware", "Brave-Browser", "User Data", "Default", "Cache"),
         ]
     elif SYSTEM == "Linux":
         dirs = [
@@ -55,86 +75,91 @@ def get_browser_cache_dirs():
     return [d for d in dirs if os.path.exists(d)]
 
 def get_log_dirs():
-    dirs = []
     if SYSTEM == "Windows":
-        dirs = [
-            os.path.expandvars(r"%WINDIR%\Logs"),
-            os.path.expandvars(r"%WINDIR%\Temp"),
-        ]
+        dirs = [os.path.expandvars(r"%WINDIR%\Logs"), os.path.expandvars(r"%WINDIR%\Temp")]
     elif SYSTEM == "Linux":
         dirs = ["/var/log"]
     elif SYSTEM == "Darwin":
         dirs = ["/var/log", os.path.expanduser("~/Library/Logs")]
+    else:
+        dirs = []
     return [d for d in dirs if os.path.exists(d)]
 
-def format_size(size_bytes):
-    if size_bytes < 1024:
-        return f"{size_bytes} B"
-    elif size_bytes < 1024**2:
-        return f"{size_bytes/1024:.1f} KB"
-    elif size_bytes < 1024**3:
-        return f"{size_bytes/1024**2:.1f} MB"
+def get_thumbnail_dirs():
+    if SYSTEM == "Windows":
+        dirs = [os.path.expandvars(r"%LOCALAPPDATA%\Microsoft\Windows\Explorer")]
+    elif SYSTEM == "Linux":
+        dirs = [os.path.expanduser("~/.cache/thumbnails"), os.path.expanduser("~/.thumbnails")]
+    elif SYSTEM == "Darwin":
+        dirs = [os.path.expanduser("~/Library/Caches/com.apple.QuickLookDaemon")]
     else:
-        return f"{size_bytes/1024**3:.2f} GB"
+        dirs = []
+    return [d for d in dirs if os.path.exists(d)]
+
+def format_size(n):
+    if n < 1024: return f"{n} B"
+    if n < 1024**2: return f"{n/1024:.1f} KB"
+    if n < 1024**3: return f"{n/1024**2:.1f} MB"
+    return f"{n/1024**3:.2f} GB"
 
 def get_dir_size(path):
     total = 0
     try:
-        for dirpath, dirnames, filenames in os.walk(path):
-            for f in filenames:
-                fp = os.path.join(dirpath, f)
-                try:
-                    total += os.path.getsize(fp)
-                except (OSError, PermissionError):
-                    pass
-    except (OSError, PermissionError):
-        pass
+        for dp, dn, fn in os.walk(path):
+            for f in fn:
+                try: total += os.path.getsize(os.path.join(dp, f))
+                except: pass
+    except: pass
     return total
 
-def safe_remove(path):
-    removed = 0
-    errors = 0
+def count_files(path):
+    count = 0
     try:
-        if os.path.isfile(path):
-            try:
-                os.chmod(path, stat.S_IWRITE)
-                os.remove(path)
-                removed += 1
-            except (OSError, PermissionError):
-                errors += 1
-        elif os.path.isdir(path):
-            for item in os.listdir(path):
-                item_path = os.path.join(path, item)
-                r, e = safe_remove(item_path)
-                removed += r
-                errors += e
-    except (OSError, PermissionError):
-        errors += 1
-    return removed, errors
+        for dp, dn, fn in os.walk(path):
+            count += len(fn)
+    except: pass
+    return count
 
-def clean_directory(path, delete_subdirs=False):
-    removed_files = 0
-    errors = 0
-    freed_bytes = 0
+def clean_directory(path, delete_subdirs=False, min_age_days=0):
+    removed = 0; errors = 0; freed = 0
+    now = time.time()
     try:
         for item in os.listdir(path):
-            item_path = os.path.join(path, item)
+            ip = os.path.join(path, item)
             try:
-                size = get_dir_size(item_path) if os.path.isdir(item_path) else os.path.getsize(item_path)
-                if os.path.isfile(item_path):
-                    os.chmod(item_path, stat.S_IWRITE)
-                    os.remove(item_path)
-                    removed_files += 1
-                    freed_bytes += size
-                elif os.path.isdir(item_path) and delete_subdirs:
-                    shutil.rmtree(item_path, ignore_errors=True)
-                    removed_files += 1
-                    freed_bytes += size
-            except (OSError, PermissionError):
-                errors += 1
-    except (OSError, PermissionError):
-        errors += 1
-    return removed_files, errors, freed_bytes
+                if min_age_days > 0:
+                    if (now - os.path.getmtime(ip)) / 86400 < min_age_days:
+                        continue
+                size = get_dir_size(ip) if os.path.isdir(ip) else os.path.getsize(ip)
+                if os.path.isfile(ip):
+                    os.chmod(ip, stat.S_IWRITE)
+                    os.remove(ip)
+                    removed += 1; freed += size
+                elif os.path.isdir(ip) and delete_subdirs:
+                    shutil.rmtree(ip, ignore_errors=True)
+                    removed += 1; freed += size
+            except: errors += 1
+    except: errors += 1
+    return removed, errors, freed
+
+# ---- History ----
+HISTORY_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "clean_history.json")
+
+def load_history():
+    try:
+        if os.path.exists(HISTORY_FILE):
+            with open(HISTORY_FILE, 'r', encoding='utf-8') as f:
+                return json.load(f)
+    except: pass
+    return []
+
+def save_history(entry):
+    history = load_history()
+    history.insert(0, entry)
+    try:
+        with open(HISTORY_FILE, 'w', encoding='utf-8') as f:
+            json.dump(history[:50], f, ensure_ascii=False, indent=2)
+    except: pass
 
 # ---- ROUTES ----
 
@@ -144,207 +169,168 @@ def index():
 
 @app.route("/api/scan", methods=["POST"])
 def scan():
-    category = request.json.get("category")
+    cat = request.json.get("category", "all")
     results = {}
 
-    if category == "temp" or category == "all":
-        total = 0
-        file_count = 0
-        for d in get_temp_dirs():
-            s = get_dir_size(d)
-            total += s
-            try:
-                for root, dirs, files in os.walk(d):
-                    file_count += len(files)
-            except:
-                pass
-        results["temp"] = {"size": total, "size_fmt": format_size(total), "files": file_count}
+    def scan_dirs(dirs, log_only=False, log_exts=None):
+        total = 0; fc = 0
+        for d in dirs:
+            if log_only and log_exts:
+                try:
+                    for root, _, files in os.walk(d):
+                        for f in files:
+                            if any(f.endswith(e) for e in log_exts):
+                                try:
+                                    total += os.path.getsize(os.path.join(root, f))
+                                    fc += 1
+                                except: pass
+                except: pass
+            else:
+                total += get_dir_size(d); fc += count_files(d)
+        return total, fc
 
-    if category == "browser" or category == "all":
-        total = 0
-        file_count = 0
-        for d in get_browser_cache_dirs():
-            s = get_dir_size(d)
-            total += s
-            try:
-                for root, dirs, files in os.walk(d):
-                    file_count += len(files)
-            except:
-                pass
-        results["browser"] = {"size": total, "size_fmt": format_size(total), "files": file_count}
+    if cat in ("temp", "all"):
+        t, f = scan_dirs(get_temp_dirs())
+        results["temp"] = {"size": t, "size_fmt": format_size(t), "files": f}
 
-    if category == "logs" or category == "all":
-        total = 0
-        file_count = 0
-        for d in get_log_dirs():
-            # Only scan .log files for safety
-            try:
-                for root, dirs, files in os.walk(d):
-                    for f in files:
-                        if f.endswith((".log", ".old", ".bak")):
-                            fp = os.path.join(root, f)
-                            try:
-                                total += os.path.getsize(fp)
-                                file_count += 1
-                            except:
-                                pass
-            except:
-                pass
-        results["logs"] = {"size": total, "size_fmt": format_size(total), "files": file_count}
+    if cat in ("browser", "all"):
+        t, f = scan_dirs(get_browser_cache_dirs())
+        results["browser"] = {"size": t, "size_fmt": format_size(t), "files": f}
 
-    if category == "trash" or category == "all":
-        trash_size = 0
-        trash_files = 0
+    if cat in ("logs", "all"):
+        t, f = scan_dirs(get_log_dirs(), log_only=True, log_exts=(".log", ".old", ".bak", ".tmp"))
+        results["logs"] = {"size": t, "size_fmt": format_size(t), "files": f}
+
+    if cat in ("thumbnails", "all"):
+        t, f = scan_dirs(get_thumbnail_dirs())
+        results["thumbnails"] = {"size": t, "size_fmt": format_size(t), "files": f}
+
+    if cat in ("trash", "all"):
+        trash_size = 0; trash_files = 0
         try:
             if SYSTEM == "Windows":
-                # Windows Recycle Bin (approximate)
-                drives = [f"{chr(d)}:\\" for d in range(65, 91) if os.path.exists(f"{chr(d)}:\\")]
-                for drive in drives:
+                for drive in [f"{chr(d)}:\\" for d in range(65, 91) if os.path.exists(f"{chr(d)}:\\")]:
                     rb = os.path.join(drive, "$Recycle.Bin")
                     if os.path.exists(rb):
-                        s = get_dir_size(rb)
-                        trash_size += s
+                        trash_size += get_dir_size(rb)
+                        trash_files += count_files(rb)
             elif SYSTEM == "Linux":
-                trash = os.path.expanduser("~/.local/share/Trash/files")
-                if os.path.exists(trash):
-                    trash_size = get_dir_size(trash)
-                    for root, dirs, files in os.walk(trash):
-                        trash_files += len(files)
+                tp = os.path.expanduser("~/.local/share/Trash/files")
+                if os.path.exists(tp):
+                    trash_size = get_dir_size(tp); trash_files = count_files(tp)
             elif SYSTEM == "Darwin":
-                trash = os.path.expanduser("~/.Trash")
-                if os.path.exists(trash):
-                    trash_size = get_dir_size(trash)
-                    for root, dirs, files in os.walk(trash):
-                        trash_files += len(files)
-        except:
-            pass
+                tp = os.path.expanduser("~/.Trash")
+                if os.path.exists(tp):
+                    trash_size = get_dir_size(tp); trash_files = count_files(tp)
+        except: pass
         results["trash"] = {"size": trash_size, "size_fmt": format_size(trash_size), "files": trash_files}
 
-    if category == "downloads" or category == "all":
-        downloads = os.path.expanduser("~/Downloads")
-        dl_size = 0
-        dl_files = 0
-        if os.path.exists(downloads):
-            dl_size = get_dir_size(downloads)
-            for f in os.listdir(downloads):
-                if os.path.isfile(os.path.join(downloads, f)):
-                    dl_files += 1
-        results["downloads"] = {"size": dl_size, "size_fmt": format_size(dl_size), "files": dl_files}
+    if cat in ("downloads", "all"):
+        dl = os.path.expanduser("~/Downloads")
+        t = get_dir_size(dl) if os.path.exists(dl) else 0
+        f = len([x for x in os.listdir(dl) if os.path.isfile(os.path.join(dl, x))]) if os.path.exists(dl) else 0
+        results["downloads"] = {"size": t, "size_fmt": format_size(t), "files": f}
 
-    # Disk usage
     try:
-        total_disk, used_disk, free_disk = shutil.disk_usage("/")
+        drive = os.path.splitdrive(tempfile.gettempdir())[0] or "/"
+        total_d, used_d, free_d = shutil.disk_usage(drive if drive else "/")
         results["disk"] = {
-            "total": total_disk,
-            "used": used_disk,
-            "free": free_disk,
-            "total_fmt": format_size(total_disk),
-            "used_fmt": format_size(used_disk),
-            "free_fmt": format_size(free_disk),
-            "used_pct": round(used_disk / total_disk * 100, 1)
+            "total": total_d, "used": used_d, "free": free_d,
+            "total_fmt": format_size(total_d), "used_fmt": format_size(used_d),
+            "free_fmt": format_size(free_d), "used_pct": round(used_d / total_d * 100, 1)
         }
-    except:
-        results["disk"] = {}
+    except: results["disk"] = {}
 
     return jsonify(results)
 
 @app.route("/api/clean", methods=["POST"])
 def clean():
     categories = request.json.get("categories", [])
-    total_freed = 0
-    total_files = 0
-    total_errors = 0
-    details = []
+    min_age = request.json.get("min_age_days", 0)
+    total_freed = 0; total_files = 0; total_errors = 0; details = []
+
+    def do_clean(dirs, subdirs=True, log_exts=None):
+        freed = 0; files = 0; errs = 0
+        for d in dirs:
+            if not os.path.exists(d): continue
+            if log_exts:
+                try:
+                    for root, _, lf in os.walk(d):
+                        for f in lf:
+                            if any(f.endswith(e) for e in log_exts):
+                                fp = os.path.join(root, f)
+                                try:
+                                    sz = os.path.getsize(fp); os.remove(fp)
+                                    files += 1; freed += sz
+                                except: errs += 1
+                except: pass
+            else:
+                f2, e2, b2 = clean_directory(d, subdirs, min_age)
+                files += f2; errs += e2; freed += b2
+        return files, errs, freed
 
     if "temp" in categories:
-        freed = 0
-        files = 0
-        for d in get_temp_dirs():
-            if os.path.exists(d):
-                f, e, b = clean_directory(d, delete_subdirs=True)
-                files += f
-                freed += b
-                total_errors += e
-        total_freed += freed
-        total_files += files
-        details.append({"category": "Ideiglenes fájlok", "files": files, "freed": format_size(freed)})
+        f, e, b = do_clean(get_temp_dirs())
+        total_files += f; total_errors += e; total_freed += b
+        details.append({"category": "Ideiglenes fájlok", "files": f, "freed": format_size(b)})
 
     if "browser" in categories:
-        freed = 0
-        files = 0
-        for d in get_browser_cache_dirs():
-            if os.path.exists(d):
-                f, e, b = clean_directory(d, delete_subdirs=True)
-                files += f
-                freed += b
-                total_errors += e
-        total_freed += freed
-        total_files += files
-        details.append({"category": "Böngésző gyorsítótár", "files": files, "freed": format_size(freed)})
+        f, e, b = do_clean(get_browser_cache_dirs())
+        total_files += f; total_errors += e; total_freed += b
+        details.append({"category": "Böngésző gyorsítótár", "files": f, "freed": format_size(b)})
 
     if "logs" in categories:
-        freed = 0
-        files = 0
-        for d in get_log_dirs():
-            try:
-                for root, dirs, log_files in os.walk(d):
-                    for lf in log_files:
-                        if lf.endswith((".log", ".old", ".bak")):
-                            fp = os.path.join(root, lf)
-                            try:
-                                sz = os.path.getsize(fp)
-                                os.remove(fp)
-                                files += 1
-                                freed += sz
-                            except:
-                                total_errors += 1
-            except:
-                pass
-        total_freed += freed
-        total_files += files
-        details.append({"category": "Log fájlok", "files": files, "freed": format_size(freed)})
+        f, e, b = do_clean(get_log_dirs(), log_exts=(".log", ".old", ".bak", ".tmp"))
+        total_files += f; total_errors += e; total_freed += b
+        details.append({"category": "Log fájlok", "files": f, "freed": format_size(b)})
+
+    if "thumbnails" in categories:
+        f, e, b = do_clean(get_thumbnail_dirs())
+        total_files += f; total_errors += e; total_freed += b
+        details.append({"category": "Bélyegkép cache", "files": f, "freed": format_size(b)})
 
     if "trash" in categories:
-        freed = 0
-        files = 0
+        f = 0; b = 0
         try:
             if SYSTEM == "Linux":
-                trash = os.path.expanduser("~/.local/share/Trash/files")
-                if os.path.exists(trash):
-                    f, e, b = clean_directory(trash, delete_subdirs=True)
-                    files += f; freed += b; total_errors += e
-                info = os.path.expanduser("~/.local/share/Trash/info")
-                if os.path.exists(info):
-                    clean_directory(info, delete_subdirs=True)
+                for tp in ["~/.local/share/Trash/files", "~/.local/share/Trash/info"]:
+                    tp2 = os.path.expanduser(tp)
+                    if os.path.exists(tp2):
+                        f2, e2, b2 = clean_directory(tp2, True)
+                        f += f2; total_errors += e2; b += b2
             elif SYSTEM == "Darwin":
-                trash = os.path.expanduser("~/.Trash")
-                if os.path.exists(trash):
-                    f, e, b = clean_directory(trash, delete_subdirs=True)
-                    files += f; freed += b; total_errors += e
+                tp2 = os.path.expanduser("~/.Trash")
+                if os.path.exists(tp2):
+                    f2, e2, b2 = clean_directory(tp2, True)
+                    f += f2; total_errors += e2; b += b2
             elif SYSTEM == "Windows":
-                subprocess.run(["PowerShell", "-Command", "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"], 
-                             capture_output=True)
-                files = 1
-        except:
-            pass
-        total_freed += freed
-        total_files += files
-        details.append({"category": "Lomtár", "files": files, "freed": format_size(freed)})
+                subprocess.run(["PowerShell", "-Command",
+                    "Clear-RecycleBin -Force -ErrorAction SilentlyContinue"],
+                    capture_output=True, timeout=15)
+                f = 1
+        except: pass
+        total_files += f; total_freed += b
+        details.append({"category": "Lomtár", "files": f, "freed": format_size(b)})
 
-    return jsonify({
-        "success": True,
+    entry = {
+        "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "categories": categories,
         "total_freed": format_size(total_freed),
         "total_freed_bytes": total_freed,
         "total_files": total_files,
         "total_errors": total_errors,
         "details": details
-    })
+    }
+    save_history(entry)
+
+    return jsonify({"success": True, "total_freed": format_size(total_freed),
+                    "total_freed_bytes": total_freed, "total_files": total_files,
+                    "total_errors": total_errors, "details": details})
 
 @app.route("/api/disk_usage")
 def disk_usage():
-    results = []
     home = os.path.expanduser("~")
-    check_dirs = [
+    dirs = [
         ("Dokumentumok", os.path.join(home, "Documents")),
         ("Letöltések", os.path.join(home, "Downloads")),
         ("Képek", os.path.join(home, "Pictures")),
@@ -353,7 +339,8 @@ def disk_usage():
         ("Asztal", os.path.join(home, "Desktop")),
         ("Ideiglenes", tempfile.gettempdir()),
     ]
-    for name, path in check_dirs:
+    results = []
+    for name, path in dirs:
         if os.path.exists(path):
             size = get_dir_size(path)
             results.append({"name": name, "path": path, "size": size, "size_fmt": format_size(size)})
@@ -367,16 +354,50 @@ def system_info():
         "machine": platform.machine(),
         "python": platform.python_version(),
         "hostname": platform.node(),
+        "processor": platform.processor() or platform.machine(),
     }
     try:
-        total, used, free = shutil.disk_usage("/")
-        info["disk_total"] = format_size(total)
-        info["disk_used"] = format_size(used)
-        info["disk_free"] = format_size(free)
-        info["disk_pct"] = round(used / total * 100, 1)
-    except:
-        pass
+        drive = os.path.splitdrive(tempfile.gettempdir())[0] or "/"
+        total, used, free = shutil.disk_usage(drive if drive else "/")
+        info.update({"disk_total": format_size(total), "disk_used": format_size(used),
+                     "disk_free": format_size(free), "disk_pct": round(used / total * 100, 1)})
+    except: pass
     return jsonify(info)
+
+@app.route("/api/history")
+def get_history():
+    return jsonify(load_history())
+
+@app.route("/api/history/clear", methods=["POST"])
+def clear_history():
+    try:
+        if os.path.exists(HISTORY_FILE): os.remove(HISTORY_FILE)
+    except: pass
+    return jsonify({"ok": True})
+
+@app.route("/api/large_files", methods=["POST"])
+def large_files():
+    path = request.json.get("path", os.path.expanduser("~"))
+    min_mb = request.json.get("min_size_mb", 50)
+    min_bytes = min_mb * 1024 * 1024
+    results = []
+    skip_dirs = {'.git', '$Recycle.Bin', 'System Volume Information', 'Windows', 'Program Files',
+                 'Program Files (x86)', 'node_modules', '__pycache__'}
+    try:
+        for root, dirs, files in os.walk(path):
+            dirs[:] = [d for d in dirs if d not in skip_dirs and not d.startswith('.')]
+            for f in files:
+                fp = os.path.join(root, f)
+                try:
+                    size = os.path.getsize(fp)
+                    if size >= min_bytes:
+                        results.append({"name": f, "path": fp, "size": size,
+                                        "size_fmt": format_size(size),
+                                        "ext": os.path.splitext(f)[1].lower()})
+                except: pass
+    except: pass
+    results.sort(key=lambda x: x["size"], reverse=True)
+    return jsonify(results[:40])
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)
