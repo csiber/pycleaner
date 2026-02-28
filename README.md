@@ -1,10 +1,16 @@
-# PyCleaner v3.0 — Rendszertisztító
+# PyCleaner v4.0 — Rendszertisztító & Tweak
+
+## 🚀 Újdonságok a v4.0-ban
+- **Windows Tweaks:** OneDrive és bloatware (Candy Crush, stb.) eltávolító.
+- **Kilépés funkció:** Teljes leállás, nem marad háttérfolyamat.
+- **Verzió kezelés:** Frissítés ellenőrzése és verzió információk.
+- **Stabilitási javítások:** Jobb registry és fájlkezelés.
 
 ## 🚀 Gyors indítás (Python)
 ```bash
 pip install flask psutil
-python app.py
-# Böngésző: http://localhost:5000
+python main.py
+# Böngésző: automatikusan megnyílik
 ```
 
 ---
@@ -22,28 +28,6 @@ pip install flask psutil pyinstaller
 pyinstaller pycleaner.spec --clean --noconfirm
 ```
 
-### Konzol nélküli verzió
-```cmd
-build_silent.bat
-```
-
----
-
-## 📁 Fájlstruktúra
-
-```
-pycleaner\
-├── main.py              ← EXE belépési pont
-├── app.py               ← Flask backend
-├── pycleaner.spec       ← PyInstaller konfig
-├── build.bat            ← Automatikus build
-├── build_silent.bat     ← Konzol nélküli build
-├── templates\index.html ← Teljes UI
-├── static\favicon.ico
-├── data\                ← config, history, schedule (auto)
-└── backups\             ← ZIP mentések (auto)
-```
-
 ---
 
 ## ⚙️ Funkciók
@@ -51,13 +35,13 @@ pycleaner\
 | Funkció | Leírás |
 |---|---|
 | 🧹 Tisztító | Temp, böngésző, logok, bélyegképek, lomtár, egyéni mappák |
+| 🛠️ Tweaks | OneDrive eltávolítás, bloatware tisztítás (Candy Crush, Xbox, stb.) |
 | 📡 Élő monitor | CPU, RAM, Swap, Disk, Hálózat, top folyamatok |
 | 👥 Duplikátumok | MD5-alapú keresés, egyenként törölhető |
 | 🗝️ Registry | Hiányzó telepítők, autostart, MUI cache (Windows) |
 | ⏰ Ütemező | Automatikus háttértisztítás |
+| ❌ Kilépés | Teljes leállás a felületről |
 | 💾 Backup | Törlés előtt ZIP mentés |
-| 🌙 Téma | Sötét / világos váltó |
-| 👤 Profilok | Több profil, jelszóvédelem |
 | 📊 Export | HTML riport, JSON export |
 
 ---

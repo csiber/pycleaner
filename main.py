@@ -1,5 +1,5 @@
 """
-PyCleaner v3.0 — Önálló indító
+PyCleaner v4.0 — Önálló indító
 Ez a fájl kezeli az exe-ből való indítást:
   - Megkeresi a szabad portot
   - Megnyitja a böngészőt
@@ -55,11 +55,11 @@ def main():
   ██╔═══╝   ╚██╔╝  ██║     ██║     ██╔══╝  ██╔══██║██║╚██╗██║██╔══╝  ██╔══██╗
   ██║        ██║   ╚██████╗███████╗███████╗██║  ██║██║ ╚████║███████╗██║  ██║
   ╚═╝        ╚═╝    ╚═════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝
-                                                                    v3.0
+                                                                    v4.0
 
   Szerver indítása: {url}
   Adatok helye:     {DATA_BASE}
-  Leállítás:        Ctrl+C vagy zárd be az ablakot
+  Leállítás:        Ctrl+C vagy használd a Kilépés gombot a felületen
     """)
 
     # Böngésző megnyitása háttérszálon

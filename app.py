@@ -1,7 +1,7 @@
 """
-PyCleaner v3.0 — Teljes rendszertisztító
+PyCleaner v4.0 — Teljes rendszertisztító
 Funkciók: tisztítás, RAM/CPU monitor, duplikált fájlok, registry,
-          ütemező, backup, profil, témaváltó, riport export
+          ütemező, backup, profil, témaváltó, riport export, windows tweak-ek
 """
 
 from flask import Flask, render_template, jsonify, request, send_from_directory, Response
@@ -20,6 +20,7 @@ except ImportError:
 
 app = Flask(__name__)
 SYSTEM = platform.system()
+VERSION = "4.0"
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "data")
 os.makedirs(DATA_DIR, exist_ok=True)
@@ -1004,6 +1005,63 @@ def delete_backup():
             return jsonify({'ok':True})
         except: pass
     return jsonify({'ok':False})
+
+# ── Windows Tweaks ────────────────────────────────────────────────────────────
+
+@app.route('/api/tweaks/onedrive', methods=['POST'])
+def tweak_onedrive():
+    if SYSTEM != "Windows": return jsonify({'ok': False, 'msg': 'Csak Windows-on!'})
+    # OneDrive eltávolító script
+    cmd = 'taskkill /f /im OneDrive.exe; %SystemRoot%\\System32\\OneDriveSetup.exe /uninstall; %SystemRoot%\\SysWOW64\\OneDriveSetup.exe /uninstall'
+    try:
+        subprocess.run(["PowerShell", "-Command", cmd], capture_output=True)
+        return jsonify({'ok': True, 'msg': 'OneDrive eltávolítás elindítva.'})
+    except Exception as e:
+        return jsonify({'ok': False, 'msg': str(e)})
+
+@app.route('/api/tweaks/bloatware', methods=['POST'])
+def tweak_bloatware():
+    if SYSTEM != "Windows": return jsonify({'ok': False, 'msg': 'Csak Windows-on!'})
+    # Alapértelmezett vackok eltávolítása
+    apps = [
+        "Microsoft.CandyCrushSaga",
+        "Microsoft.CandyCrushSodaSaga",
+        "Microsoft.BingNews",
+        "Microsoft.BingWeather",
+        "Microsoft.GetHelp",
+        "Microsoft.YourPhone",
+        "Microsoft.ZuneVideo",
+        "Microsoft.ZuneMusic",
+        "Microsoft.MicrosoftSolitaireCollection",
+        "Microsoft.People",
+        "Microsoft.Office.OneNote",
+        "Microsoft.SkypeApp",
+        "Microsoft.WindowsFeedbackHub",
+        "Microsoft.XboxApp",
+        "Microsoft.XboxGameOverlay",
+        "Microsoft.XboxGamingOverlay",
+        "Microsoft.XboxIdentityProvider",
+        "Microsoft.XboxSpeechToTextOverlay"
+    ]
+    results = []
+    for app_name in apps:
+        cmd = f'Get-AppxPackage *{app_name}* | Remove-AppxPackage'
+        try:
+            subprocess.run(["PowerShell", "-Command", cmd], capture_output=True)
+            results.append(app_name)
+        except: pass
+    return jsonify({'ok': True, 'apps': results})
+
+# ── Exit ──────────────────────────────────────────────────────────────────────
+
+@app.route('/api/exit', methods=['POST'])
+def app_exit():
+    # Késleltetett kilépés, hogy a response visszaérjen
+    def shutdown():
+        time.sleep(1)
+        os._exit(0)
+    threading.Thread(target=shutdown).start()
+    return jsonify({'ok': True, 'msg': 'Program leállítása...'})
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)

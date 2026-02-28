@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>PyCleaner v3.0</title>
+  <title>PyCleaner v4.0</title>
   <link rel="icon" href="/favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="/static/favicon.png">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=IBM+Plex+Mono:wght@300;400;600&display=swap" rel="stylesheet">
@@ -425,7 +425,7 @@
   <!-- HEADER -->
   <header>
     <div class="logo">Py<span>Cleaner</span></div>
-    <div class="ver">v3.0</div>
+    <div class="ver">v4.0</div>
     <div class="hdr-right">
       <select class="profile-sel" id="profileSel" onchange="switchProfile(this.value)"></select>
       <button class="theme-btn" id="themeBtn" onclick="toggleTheme()" title="Téma váltása">🌙</button>
@@ -479,11 +479,19 @@
       <span class="nav-pill" id="navHist">0</span>
     </div>
     <div class="nav-div"></div>
+    <div class="nav-sec">Extrák</div>
+    <div class="nav-item" data-page="tweaks">
+      <span class="nav-icon">🛠️</span>Tweaks
+    </div>
     <div class="nav-item" data-page="settings">
       <span class="nav-icon">⚙️</span>Beállítások
     </div>
     <div class="nav-item" data-page="log">
       <span class="nav-icon">📋</span>Napló
+    </div>
+    <div class="nav-div"></div>
+    <div class="nav-item" onclick="appExit()" style="color:var(--danger)">
+      <span class="nav-icon">❌</span>Kilépés
     </div>
   </nav>
 
@@ -747,6 +755,36 @@
         <button class="btn btn-s btn-sm" onclick="clearHistory()">🗑️ Törlés</button>
       </div>
       <div id="histContent" style="color:var(--text2);font-size:11px;padding:20px">Betöltés...</div>
+    </div>
+
+    <!-- ══════════ TWEAKS ══════════ -->
+    <div class="page" id="page-tweaks">
+      <div class="page-title">Windows Tweaks</div>
+      <div class="page-sub">Rendszer optimalizálás és bloatware eltávolítás</div>
+
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-hdr"><span class="card-lbl">OneDrive eltávolítás</span><span class="card-ico">☁️</span></div>
+          <p style="font-size:10px;color:var(--text2);margin-bottom:12px">Teljesen eltávolítja a OneDrive-ot a rendszerből.</p>
+          <button class="btn btn-d btn-sm" onclick="runTweak('onedrive')">Eltávolítás</button>
+        </div>
+        <div class="card">
+          <div class="card-hdr"><span class="card-lbl">Bloatware eltávolítás</span><span class="card-ico">🍬</span></div>
+          <p style="font-size:10px;color:var(--text2);margin-bottom:12px">Eltávolítja az előre telepített vackokat (Candy Crush, Xbox, stb.).</p>
+          <button class="btn btn-d btn-sm" onclick="runTweak('bloatware')">Tisztítás</button>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px">
+        <div class="card-hdr"><span class="card-lbl">Verzió kezelés</span><span class="card-ico">🆕</span></div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <div style="font-size:11px">Jelenlegi verzió: <span style="color:var(--accent)">v4.0</span></div>
+            <div style="font-size:9px;color:var(--text2)">Nincs újabb elérhető verzió.</div>
+          </div>
+          <button class="btn btn-p btn-sm" onclick="toast('Nincs újabb verzió','info')">Frissítés ellenőrzése</button>
+        </div>
+      </div>
     </div>
 
     <!-- ══════════ SETTINGS ══════════ -->
@@ -1512,6 +1550,41 @@ function closePwModal() {
 }
 
 document.getElementById('pwInput').addEventListener('keydown', e => { if (e.key === 'Enter') submitPassword(); });
+
+// ═══════════════════════════════════════════════════════════
+// TWEAKS & EXIT
+// ═══════════════════════════════════════════════════════════
+async function runTweak(type) {
+  if (!confirm(`Biztosan futtatod a következő tweak-et: ${type}?`)) return;
+  toast('Feldolgozás...', 'info');
+  try {
+    const res = await fetch(`/api/tweaks/${type}`, { method:'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      toast('Sikeres művelet!', 'ok');
+      addLog(`Tweak (${type}) sikeres.`, 'ok');
+    } else {
+      toast('Hiba: ' + data.msg, 'err');
+    }
+  } catch(e) {
+    toast('Hiba a hálózati kapcsolatban', 'err');
+  }
+}
+
+async function appExit() {
+  if (!confirm('Biztosan ki szeretnél lépni?')) return;
+  try {
+    const res = await fetch('/api/exit', { method:'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      document.body.innerHTML = '<div style="background:#080a0e;color:#00c8f0;height:100vh;display:flex;align-items:center;justify-content:center;font-family:Orbitron,sans-serif;font-size:24px;letter-spacing:4px">KILÉPÉS...</div>';
+      setTimeout(() => window.close(), 1000);
+    }
+  } catch(e) {
+    // Ha már leállt a szerver
+    window.close();
+  }
+}
 
 // ═══════════════════════════════════════════════════════════
 // UTILS
