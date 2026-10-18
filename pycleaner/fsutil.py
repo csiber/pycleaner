@@ -148,12 +148,12 @@ def _is_junction(path: str) -> bool:
 
 
 def send_to_trash(path: str) -> None:
-    """Lomtárba helyezés (ha a send2trash elérhető), különben végleges törlés."""
+    """Lomtárba helyezés. Ha a send2trash hiányzik, hibát ad — csendben soha nem töröl véglegesen."""
     try:
         from send2trash import send2trash
-    except ImportError:  # pragma: no cover - a requirements tartalmazza
-        _remove_file(path)
-        return
+    except ImportError as e:
+        raise RuntimeError("A Lomtárba helyezéshez hiányzik a send2trash csomag "
+                           "(pip install -r requirements.txt); a fájlhoz nem nyúltam.") from e
     send2trash(path)
 
 

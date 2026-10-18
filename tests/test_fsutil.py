@@ -72,3 +72,22 @@ def test_symlinked_root_is_refused(tmp_path):
     (tmp_path / "link").symlink_to(real, target_is_directory=True)
     assert clean_dir(str(tmp_path / "link")) == (0, 0, 0)
     assert (real / "x.tmp").exists()
+
+
+def test_trash_never_falls_back_to_permanent_delete(tmp_path, monkeypatch):
+    import builtins
+
+    from pycleaner.fsutil import send_to_trash
+    f = tmp_path / "keep.txt"
+    f.write_text("fontos")
+    real_import = builtins.__import__
+
+    def fake_import(name, *a, **k):
+        if name == "send2trash":
+            raise ImportError("nincs")
+        return real_import(name, *a, **k)
+
+    monkeypatch.setattr(builtins, "__import__", fake_import)
+    with pytest.raises(RuntimeError):
+        send_to_trash(str(f))
+    assert f.exists()

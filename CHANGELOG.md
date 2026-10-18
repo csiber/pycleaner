@@ -2,6 +2,12 @@
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/hu/1.1.0/) ajánlását követi, a verziózás [SemVer](https://semver.org/lang/hu/).
 
+## [Kiadatlan]
+
+### Javítva
+- Forrásból indításnál (`python main.py`) a hiányzó csomagok (pl. Flask) helyett nyers Python-hiba jelent meg. Most magyar üzenet mondja meg, mi hiányzik, és felajánlja a telepítést.
+- Ha a `send2trash` csomag hiányzott, a „Lomtárba” művelet véglegesen törölt volna. Most hibát ad, és a fájlhoz nem nyúl. (A kiadott exe-ket nem érintette, azokban a csomag benne van.)
+
 ## [5.0.0] — 2026-10-18
 
 Teljes újraírás: új felület, natív ablak, és a 4.x több veszélyes hibájának javítása. **Mindenkinek javasolt a frissítés.**

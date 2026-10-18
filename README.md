@@ -64,6 +64,8 @@ A Windows-fájlokat a GitHub Actions építi és írja alá közvetlenül ebből
 
 ## Futtatás forrásból
 
+> Ha csak használni szeretnéd, a fenti **kész exe** a jobb választás — abban minden benne van, Python sem kell hozzá.
+
 ```bash
 git clone https://github.com/csiber/pycleaner.git
 cd pycleaner
@@ -73,7 +75,7 @@ pip install -r requirements.txt
 python main.py                    # natív ablak; --browser: böngészőben, --no-open: csak a szerver
 ```
 
-Python 3.10 vagy újabb kell. Linuxon és macOS-en az alapfunkciók (tisztítás, monitor, lemezelemző, duplikátumok) működnek, a Registry és a Finomhangolás csak Windowson jelenik meg.
+Python 3.10 vagy újabb kell. Ha a csomagok telepítése kimaradt, a `python main.py` kiírja, mi hiányzik, és felajánlja a telepítést. Linuxon és macOS-en az alapfunkciók (tisztítás, monitor, lemezelemző, duplikátumok) működnek, a Registry és a Finomhangolás csak Windowson jelenik meg.
 
 ### Windows-build
 
