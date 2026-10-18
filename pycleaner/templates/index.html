@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="hu" data-theme="system">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="pyc-token" content="{{ token }}">
+  <meta name="color-scheme" content="dark light">
+  <title>PyCleaner</title>
+  <link rel="icon" href="/favicon.ico">
+  <link rel="stylesheet" href="/static/app.css?v={{ version }}">
+</head>
+<body class="{{ 'native' if native else 'browser' }}">
+<div class="shell">
+  <aside class="side">
+    <div class="brand">
+      <img src="/static/logo.svg" alt="" width="30" height="30">
+      <div><b>PyCleaner</b><span>v{{ version }}</span></div>
+    </div>
+    <nav id="nav" aria-label="Főmenü">
+      <a data-page="overview" class="active"><svg class="ic"><use href="/static/icons.svg#i-layout-dashboard"/></svg>Áttekintés</a>
+      <a data-page="cleaner"><svg class="ic"><use href="/static/icons.svg#i-sparkles"/></svg>Tisztítás<em id="pillClean"></em></a>
+      <a data-page="monitor"><svg class="ic"><use href="/static/icons.svg#i-activity"/></svg>Élő monitor<em id="pillCpu" class="quiet"></em></a>
+      <div class="nav-sec">Elemzés</div>
+      <a data-page="disk"><svg class="ic"><use href="/static/icons.svg#i-hard-drive"/></svg>Lemezelemző</a>
+      <a data-page="dupes"><svg class="ic"><use href="/static/icons.svg#i-copy"/></svg>Duplikátumok</a>
+      <div class="nav-sec win-only">Windows</div>
+      <a data-page="registry" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-list-tree"/></svg>Registry</a>
+      <a data-page="tweaks" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-wrench"/></svg>Finomhangolás</a>
+      <div class="nav-sec">Karbantartás</div>
+      <a data-page="schedule"><svg class="ic"><use href="/static/icons.svg#i-clock"/></svg>Ütemező<em id="pillSched" class="quiet"></em></a>
+      <a data-page="history"><svg class="ic"><use href="/static/icons.svg#i-history"/></svg>Előzmények</a>
+      <a data-page="settings"><svg class="ic"><use href="/static/icons.svg#i-settings"/></svg>Beállítások<em id="pillUpdate" class="dot" hidden></em></a>
+    </nav>
+    <div class="side-foot">
+      <button class="profile-btn" id="profileBtn" title="Profil váltása">
+        <svg class="ic"><use href="/static/icons.svg#i-user"/></svg><span id="profileName">—</span>
+      </button>
+      <div class="side-row">
+        <span class="chip" id="adminChip">—</span>
+        <button class="icon-btn" id="themeBtn" title="Téma váltása"><svg class="ic"><use href="/static/icons.svg#i-moon"/></svg></button>
+        <button class="icon-btn danger" id="exitBtn" title="Kilépés"><svg class="ic"><use href="/static/icons.svg#i-power"/></svg></button>
+      </div>
+    </div>
+  </aside>
+
+  <main id="main">
+    <section class="page active" id="page-overview"></section>
+    <section class="page" id="page-cleaner"></section>
+    <section class="page" id="page-monitor"></section>
+    <section class="page" id="page-disk"></section>
+    <section class="page" id="page-dupes"></section>
+    <section class="page" id="page-registry"></section>
+    <section class="page" id="page-tweaks"></section>
+    <section class="page" id="page-schedule"></section>
+    <section class="page" id="page-history"></section>
+    <section class="page" id="page-settings"></section>
+  </main>
+</div>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+<dialog id="dlg"></dialog>
+<div class="goodbye" id="goodbye" hidden>
+  <img src="/static/logo.svg" alt="" width="56" height="56">
+  <h2>A PyCleaner leállt</h2>
+  <p>Ezt a lapot nyugodtan bezárhatod.</p>
+</div>
+<script src="/static/app.js?v={{ version }}"></script>
+</body>
+</html>

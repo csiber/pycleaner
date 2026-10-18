@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pycleaner"
+dynamic = ["version"]
+description = "Rendszertisztító és karbantartó eszköz Windowsra — natív ablakkal, biztonságos alapbeállításokkal."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Polyák Csaba" }]
+requires-python = ">=3.10"
+dependencies = [
+  "flask>=3.0",
+  "psutil>=5.9",
+  "send2trash>=1.8",
+  "pywebview>=5.0; sys_platform == 'win32' or sys_platform == 'darwin'",
+]
+classifiers = [
+  "Environment :: Win32 (MS Windows)",
+  "Natural Language :: Hungarian",
+  "Operating System :: Microsoft :: Windows :: Windows 10",
+  "Operating System :: Microsoft :: Windows :: Windows 11",
+  "Programming Language :: Python :: 3",
+  "Topic :: System :: Systems Administration",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "pyinstaller>=6.6"]
+
+[project.scripts]
+pycleaner = "pycleaner.launcher:main"
+
+[project.urls]
+Homepage = "https://github.com/csiber/pycleaner"
+Wiki = "https://github.com/csiber/pycleaner/wiki"
+Issues = "https://github.com/csiber/pycleaner/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "pycleaner.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["pycleaner*"]
+
+[tool.setuptools.package-data]
+pycleaner = ["templates/*", "static/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
