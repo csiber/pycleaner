@@ -7,6 +7,8 @@ az így készült, nyilvánosan kiadott fájlok kapnak; helyi vagy kézzel kész
 
 - **Karbantartó, fejlesztő és jóváhagyó:** Polyák Csaba ([@csiber](https://github.com/csiber), info@promnet.hu). Minden aláírási kérést ő hagy jóvá; külső hozzájárulás csak az ő átnézése után kerül a `main` ágba.
 - **Adatvédelem:** a program a felhasználó gépéről semmilyen adatot nem küld el. Egyetlen hálózati kérése a frissítés-ellenőrzés, amely a GitHub nyilvános API-jától lekéri a legújabb kiadás verziószámát (`api.github.com/repos/csiber/pycleaner/releases/latest`); ez a Beállításokban kikapcsolható. A felület kizárólag a helyi gépen (`127.0.0.1`) érhető el.
+- **Harmadik féltől származó komponens:** a natív ablakhoz a Windowsba épített Microsoft Edge WebView2 futtatókörnyezetet használja; ennek adatkezelésére a Microsoft saját beállításai és [adatvédelmi nyilatkozata](https://privacy.microsoft.com) vonatkoznak. A PyCleaner a WebView2-ben csak a helyi felületet nyitja meg.
+- **Rendszermódosítás:** registry-javítás, alkalmazás- és OneDrive-eltávolítás, végleges törlés csak külön megerősítés után történik; a registry-javítás előtt automatikus `.reg` mentés készül. A telepítő eltávolítható (Beállítások → Alkalmazások).
 - **Mit csinál a program:** ideiglenes fájlokat és gyorsítótárakat töröl, a felhasználó által kijelölt fájlokat a Lomtárba helyezi, a Windows rendszerleíró adatbázisában mentés után elavult bejegyzéseket javít, és kérésre előtelepített alkalmazásokat távolít el. Részletek: [wiki](https://github.com/csiber/pycleaner/wiki).
 
 **English.** Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
@@ -14,4 +16,5 @@ Windows binaries (installer, portable exe and the `PyCleaner.exe` inside the ZIP
 public repository (`.github/workflows/release.yml`, tags `v*`); only those released builds are signed, never local builds.
 
 - **Committer, reviewer and approver:** Csaba Polyák ([@csiber](https://github.com/csiber)). Every signing request is approved manually by him.
-- **Privacy:** this program will not transfer any information to other networked systems. Its only network request is an optional update check that reads the latest release version from the public GitHub API; it can be disabled in Settings. The user interface is served on `127.0.0.1` only.
+- **Privacy:** this program will not transfer any information to other networked systems unless specifically requested by the user. Its only network request is an optional update check that reads the latest release version from the public GitHub API; it can be disabled in Settings. The user interface is served on `127.0.0.1` only. The native window uses the Microsoft Edge WebView2 runtime built into Windows, which is governed by Microsoft's own settings and [privacy statement](https://privacy.microsoft.com).
+- **System changes:** registry fixes, app/OneDrive removal and permanent deletion always require explicit confirmation; a `.reg` backup is created before any registry change. The installer has a matching uninstaller.

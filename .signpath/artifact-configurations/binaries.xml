@@ -2,13 +2,16 @@
 <!-- SignPath artifact configuration, slug: "binaries".
      A GitHub-műtermék szerkezete: PyCleaner/PyCleaner.exe + PyCleaner-portable.exe (release.yml, "unsigned-binaries"). -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
   <zip-file>
     <directory path="PyCleaner">
-      <pe-file path="PyCleaner.exe" product-name="PyCleaner">
+      <pe-file path="PyCleaner.exe" product-name="PyCleaner" product-version="${version}">
         <authenticode-sign />
       </pe-file>
     </directory>
-    <pe-file path="PyCleaner-portable.exe" product-name="PyCleaner">
+    <pe-file path="PyCleaner-portable.exe" product-name="PyCleaner" product-version="${version}">
       <authenticode-sign />
     </pe-file>
   </zip-file>

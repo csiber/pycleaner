@@ -59,7 +59,7 @@ Részletek: [wiki → Biztonság](https://github.com/csiber/pycleaner/wiki/Bizto
 ## Kódaláírás
 
 Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org).
-A Windows-fájlokat a GitHub Actions építi és írja alá közvetlenül ebből a tárolóból — részletek: [kódaláírási szabályzat](CODESIGNING.md).
+A Windows-fájlokat a GitHub Actions építi és írja alá közvetlenül ebből a tárolóból — részletek: [Code signing policy / kódaláírási szabályzat](CODESIGNING.md).
 *Állapot: a SignPath Foundation-jelentkezés folyamatban; addig a kiadások aláíratlanok, ezért a SmartScreen „Ismeretlen kiadó” figyelmeztetést adhat („További információ” → „Futtatás mindenképp”).*
 
 ## Futtatás forrásból

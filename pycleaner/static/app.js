@@ -503,13 +503,17 @@ function renderRegistry() {
   $$('[data-reg]').forEach(cb => cb.onchange = () => { const id = Number(cb.dataset.reg); cb.checked ? S.regSel.add(id) : S.regSel.delete(id); renderRegistry(); });
   const all = $('#rgAll'); if (all) all.onclick = () => { R.issues.filter(i => !(i.admin && !admin)).forEach(i => S.regSel.add(i.id)); renderRegistry(); };
   const fix = $('#rgFix');
-  if (fix) fix.onclick = e => busy(e.currentTarget, async () => {
+  if (fix) fix.onclick = async e => {
+    if (!await dialog({ title: `${S.regSel.size} registry-bejegyzés javítása`, ok: 'Javítás', danger: true,
+      text: 'A kijelölt bejegyzések törlődnek a rendszerleíró adatbázisból. Előtte automatikus .reg mentés készül, amelyre duplán kattintva visszaállíthatók.' })) return;
+    busy(e.currentTarget, async () => {
     const r = await api('registry/fix', { ids: [...S.regSel] });
     const ok = r.results.filter(x => x.ok).length, bad = r.results.filter(x => !x.ok);
     if (ok) toast(`${ok} bejegyzés javítva, mentés: registry-backups`, 'ok');
     if (bad.length) toast(bad[0].msg, 'err', 6000);
     S.reg = await api('registry/scan'); S.regSel.clear(); renderRegistry();
-  });
+    });
+  };
 }
 
 /* ── WINDOWS-FINOMHANGOLÁS ───────────────────────────────────────────────── */

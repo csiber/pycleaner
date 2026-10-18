@@ -2,8 +2,11 @@
 <!-- SignPath artifact configuration, slug: "installer".
      A GitHub-műtermék egyetlen fájl, rögzített néven: PyCleaner-Setup.exe (release.yml, "unsigned-installer"). -->
 <artifact-configuration xmlns="http://signpath.io/artifact-configuration/v1">
+  <parameters>
+    <parameter name="version" required="true" />
+  </parameters>
   <zip-file>
-    <pe-file path="PyCleaner-Setup.exe" product-name="PyCleaner">
+    <pe-file path="PyCleaner-Setup.exe" product-name="PyCleaner" product-version="${version}">
       <authenticode-sign />
     </pe-file>
   </zip-file>

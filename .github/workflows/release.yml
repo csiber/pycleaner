@@ -96,6 +96,8 @@ jobs:
           project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pycleaner' }}
           signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
           artifact-configuration-slug: binaries
+          parameters: |
+            version: "${{ steps.ver.outputs.version }}"
           github-artifact-id: ${{ steps.up_bin.outputs.artifact-id }}
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 3600
@@ -144,6 +146,8 @@ jobs:
           project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pycleaner' }}
           signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
           artifact-configuration-slug: installer
+          parameters: |
+            version: "${{ steps.ver.outputs.version }}"
           github-artifact-id: ${{ steps.up_setup_art.outputs.artifact-id }}
           wait-for-completion: true
           wait-for-completion-timeout-in-seconds: 3600
@@ -175,6 +179,7 @@ jobs:
           $log = Get-Content CHANGELOG.md -Raw -Encoding utf8
           $m = [regex]::Match($log, "(?ms)^## \[?$([regex]::Escape($v))\]?.*?$\r?\n(.*?)(?=^## |\z)")
           $body = if ($m.Success) { $m.Groups[1].Value.Trim() } else { "PyCleaner $v" }
+          $body += "`n`n---`n[Code signing policy / kódaláírási szabályzat](https://github.com/csiber/pycleaner/blob/main/CODESIGNING.md) · Free code signing provided by [SignPath.io](https://about.signpath.io), certificate by [SignPath Foundation](https://signpath.org)."
           Set-Content release-notes.md $body -Encoding utf8
 
       - uses: actions/upload-artifact@v4
