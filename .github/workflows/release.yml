@@ -13,6 +13,9 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    env:
+      # Aláírás csak akkor, ha a SignPath be van állítva (lásd .signpath/README.md) — addig aláíratlan a kiadás.
+      SIGNING: ${{ secrets.SIGNPATH_API_TOKEN != '' && vars.SIGNPATH_ORGANIZATION_ID != '' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -72,6 +75,39 @@ jobs:
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           if (-not $ok) { throw "A natív ablak nem indult el." }
 
+      # ── kódaláírás 1/2: a program exe-i (a telepítő már az aláírt exe-t csomagolja) ──
+      - name: Aláíratlan exe-k feltöltése
+        id: up_bin
+        if: env.SIGNING == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-binaries
+          path: |
+            dist/PyCleaner/PyCleaner.exe
+            dist/PyCleaner-portable.exe
+          if-no-files-found: error
+
+      - name: Aláírás (SignPath) — exe-k
+        if: env.SIGNING == 'true'
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pycleaner' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: binaries
+          github-artifact-id: ${{ steps.up_bin.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed-bin
+
+      - name: Aláírt exe-k visszahelyezése
+        if: env.SIGNING == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item signed-bin\PyCleaner\PyCleaner.exe dist\PyCleaner\PyCleaner.exe -Force
+          Copy-Item signed-bin\PyCleaner-portable.exe dist\PyCleaner-portable.exe -Force
+
       - name: Telepítő (Inno Setup)
         shell: pwsh
         run: |
@@ -80,6 +116,50 @@ jobs:
           if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
           & $iscc /Qp "/DAppVersion=${{ steps.ver.outputs.version }}" packaging\installer.iss
           if ($LASTEXITCODE -ne 0) { throw "Inno Setup hiba" }
+
+      # ── kódaláírás 2/2: a telepítő ──
+      - name: Telepítő előkészítése aláírásra
+        id: up_setup
+        if: env.SIGNING == 'true'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory unsigned-setup | Out-Null
+          Copy-Item "dist\PyCleaner-${{ steps.ver.outputs.version }}-Setup.exe" unsigned-setup\PyCleaner-Setup.exe
+
+      - name: Aláíratlan telepítő feltöltése
+        id: up_setup_art
+        if: env.SIGNING == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: unsigned-installer
+          path: unsigned-setup/PyCleaner-Setup.exe
+          if-no-files-found: error
+
+      - name: Aláírás (SignPath) — telepítő
+        if: env.SIGNING == 'true'
+        uses: signpath/github-action-submit-signing-request@v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG || 'pycleaner' }}
+          signing-policy-slug: ${{ vars.SIGNPATH_POLICY_SLUG || 'release-signing' }}
+          artifact-configuration-slug: installer
+          github-artifact-id: ${{ steps.up_setup_art.outputs.artifact-id }}
+          wait-for-completion: true
+          wait-for-completion-timeout-in-seconds: 3600
+          output-artifact-directory: signed-setup
+
+      - name: Aláírások ellenőrzése
+        if: env.SIGNING == 'true'
+        shell: pwsh
+        run: |
+          Copy-Item signed-setup\PyCleaner-Setup.exe "dist\PyCleaner-${{ steps.ver.outputs.version }}-Setup.exe" -Force
+          $files = @("dist\PyCleaner\PyCleaner.exe", "dist\PyCleaner-portable.exe", "dist\PyCleaner-${{ steps.ver.outputs.version }}-Setup.exe")
+          foreach ($f in $files) {
+            $sig = Get-AuthenticodeSignature $f
+            "{0}: {1} — {2}" -f $f, $sig.Status, $sig.SignerCertificate.Subject
+            if ($sig.Status -ne 'Valid') { throw "Érvénytelen aláírás: $f" }
+          }
 
       - name: Kiadási fájlok
         shell: pwsh
@@ -99,7 +179,7 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: PyCleaner-${{ steps.ver.outputs.version }}
+          name: PyCleaner-${{ steps.ver.outputs.version }}${{ env.SIGNING != 'true' && '-alairatlan' || '' }}
           path: release/
 
       - name: GitHub Release
