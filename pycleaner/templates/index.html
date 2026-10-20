@@ -10,6 +10,7 @@
   <link rel="stylesheet" href="/static/app.css?v={{ version }}">
 </head>
 <body class="{{ 'native' if native else 'browser' }}">
+{{ icons }}
 <div class="shell">
   <aside class="side">
     <div class="brand">
@@ -17,32 +18,32 @@
       <div><b>PyCleaner</b><span>v{{ version }}</span></div>
     </div>
     <nav id="nav" aria-label="Menu">
-      <a data-page="overview" class="active"><svg class="ic"><use href="/static/icons.svg#i-layout-dashboard"/></svg><span data-i18n>Áttekintés</span></a>
-      <a data-page="cleaner"><svg class="ic"><use href="/static/icons.svg#i-sparkles"/></svg><span data-i18n>Tisztítás</span><em id="pillClean"></em></a>
-      <a data-page="monitor"><svg class="ic"><use href="/static/icons.svg#i-activity"/></svg><span data-i18n>Élő monitor</span><em id="pillCpu" class="quiet"></em></a>
+      <a data-page="overview" class="active"><svg class="ic"><use href="#i-layout-dashboard"/></svg><span data-i18n>Áttekintés</span></a>
+      <a data-page="cleaner"><svg class="ic"><use href="#i-sparkles"/></svg><span data-i18n>Tisztítás</span><em id="pillClean"></em></a>
+      <a data-page="monitor"><svg class="ic"><use href="#i-activity"/></svg><span data-i18n>Élő monitor</span><em id="pillCpu" class="quiet"></em></a>
       <div class="nav-sec" data-i18n>Elemzés</div>
-      <a data-page="disk"><svg class="ic"><use href="/static/icons.svg#i-hard-drive"/></svg><span data-i18n>Lemezelemző</span></a>
-      <a data-page="dupes"><svg class="ic"><use href="/static/icons.svg#i-copy"/></svg><span data-i18n>Duplikátumok</span></a>
+      <a data-page="disk"><svg class="ic"><use href="#i-hard-drive"/></svg><span data-i18n>Lemezelemző</span></a>
+      <a data-page="dupes"><svg class="ic"><use href="#i-copy"/></svg><span data-i18n>Duplikátumok</span></a>
       <div class="nav-sec win-only" data-i18n>Gép karbantartása</div>
-      <a data-page="health" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-heart-pulse"/></svg><span data-i18n>Gépállapot</span><em id="pillHealth" class="quiet"></em></a>
-      <a data-page="startup" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-rocket"/></svg><span data-i18n>Indítópult</span></a>
-      <a data-page="updates" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-circle-arrow-up"/></svg><span data-i18n>Programfrissítő</span><em id="pillUpd"></em></a>
-      <a data-page="programs" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-package"/></svg><span data-i18n>Programok</span></a>
-      <a data-page="registry" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-list-tree"/></svg><span data-i18n>Registry</span></a>
-      <a data-page="tweaks" class="win-only"><svg class="ic"><use href="/static/icons.svg#i-wrench"/></svg><span data-i18n>Finomhangolás</span></a>
+      <a data-page="health" class="win-only"><svg class="ic"><use href="#i-heart-pulse"/></svg><span data-i18n>Gépállapot</span><em id="pillHealth" class="quiet"></em></a>
+      <a data-page="startup" class="win-only"><svg class="ic"><use href="#i-rocket"/></svg><span data-i18n>Indítópult</span></a>
+      <a data-page="updates" class="win-only"><svg class="ic"><use href="#i-circle-arrow-up"/></svg><span data-i18n>Programfrissítő</span><em id="pillUpd"></em></a>
+      <a data-page="programs" class="win-only"><svg class="ic"><use href="#i-package"/></svg><span data-i18n>Programok</span></a>
+      <a data-page="registry" class="win-only"><svg class="ic"><use href="#i-list-tree"/></svg><span data-i18n>Registry</span></a>
+      <a data-page="tweaks" class="win-only"><svg class="ic"><use href="#i-wrench"/></svg><span data-i18n>Finomhangolás</span></a>
       <div class="nav-sec" data-i18n>Karbantartás</div>
-      <a data-page="schedule"><svg class="ic"><use href="/static/icons.svg#i-clock"/></svg><span data-i18n>Ütemező</span><em id="pillSched" class="quiet"></em></a>
-      <a data-page="history"><svg class="ic"><use href="/static/icons.svg#i-history"/></svg><span data-i18n>Előzmények</span></a>
-      <a data-page="settings"><svg class="ic"><use href="/static/icons.svg#i-settings"/></svg><span data-i18n>Beállítások</span><em id="pillUpdate" class="dot" hidden></em></a>
+      <a data-page="schedule"><svg class="ic"><use href="#i-clock"/></svg><span data-i18n>Ütemező</span><em id="pillSched" class="quiet"></em></a>
+      <a data-page="history"><svg class="ic"><use href="#i-history"/></svg><span data-i18n>Előzmények</span></a>
+      <a data-page="settings"><svg class="ic"><use href="#i-settings"/></svg><span data-i18n>Beállítások</span><em id="pillUpdate" class="dot" hidden></em></a>
     </nav>
     <div class="side-foot">
       <button class="profile-btn" id="profileBtn">
-        <svg class="ic"><use href="/static/icons.svg#i-user"/></svg><span id="profileName">—</span>
+        <svg class="ic"><use href="#i-user"/></svg><span id="profileName">—</span>
       </button>
       <div class="side-row">
         <span class="chip" id="adminChip">—</span>
-        <button class="icon-btn" id="themeBtn"><svg class="ic"><use href="/static/icons.svg#i-moon"/></svg></button>
-        <button class="icon-btn danger" id="exitBtn"><svg class="ic"><use href="/static/icons.svg#i-power"/></svg></button>
+        <button class="icon-btn" id="themeBtn"><svg class="ic"><use href="#i-moon"/></svg></button>
+        <button class="icon-btn danger" id="exitBtn"><svg class="ic"><use href="#i-power"/></svg></button>
       </div>
     </div>
   </aside>

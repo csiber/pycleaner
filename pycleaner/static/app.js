@@ -8,7 +8,7 @@ const $$ = (s, r = document) => [...r.querySelectorAll(s)];
 const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 /* jobbról levágott útvonal (direction:rtl) — az LRM jelek tartják a helyén a perjeleket */
 const ltr = v => `\u200e${esc(v)}\u200e`;
-const icon = (n, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="/static/icons.svg#i-${n}"/></svg>`;
+const icon = (n, cls = '') => `<svg class="ic ${cls}" aria-hidden="true"><use href="#i-${n}"/></svg>`;
 
 /* ── nyelv ───────────────────────────────────────────────────────────────── */
 const L = { lang: 'hu', en: {} };
@@ -156,7 +156,7 @@ function applyTheme() {
   root.dataset.theme = th;
   root.classList.toggle('prefers-light', th === 'system' && mqLight.matches);
   const isLight = th === 'light' || (th === 'system' && mqLight.matches);
-  $('#themeBtn use').setAttribute('href', `/static/icons.svg#i-${isLight ? 'sun' : 'moon'}`);
+  $('#themeBtn use').setAttribute('href', `#i-${isLight ? 'sun' : 'moon'}`);
   const prof = S.config?.profiles?.[S.config.active_profile];
   if (prof?.accent) root.style.setProperty('--ac', prof.accent);
 }

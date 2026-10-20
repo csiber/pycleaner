@@ -25,8 +25,23 @@ from .i18n import t
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
 
 
+def _register_mimetypes() -> None:
+    """Windowson a mimetypes a registryből olvas, ami gépenként hibás lehet; a nosniff miatt a rossz típus
+    a felület elemeit (ikon, stílus, szkript) csendben eldobatná. Ezért rögzítjük a sajátjainkat."""
+    import mimetypes
+    for ext, typ in ((".svg", "image/svg+xml"), (".js", "text/javascript"), (".css", "text/css"),
+                     (".json", "application/json"), (".png", "image/png"), (".ico", "image/x-icon")):
+        mimetypes.add_type(typ, ext)
+
+
 def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
+    _register_mimetypes()
     res = resource_dir()
+    # az ikonkészlet a HTML-be ágyazva megy ki (külső <use href="fájl.svg#…"> hivatkozás nélkül)
+    try:
+        icons_svg = (res / "static" / "icons.svg").read_text(encoding="utf-8")
+    except OSError:
+        icons_svg = ""
     app = Flask("pycleaner", template_folder=str(res / "templates"), static_folder=str(res / "static"))
     app.config["TOKEN"] = token or secrets.token_urlsafe(32)
     app.config["JSON_SORT_KEYS"] = False
@@ -76,8 +91,9 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
     # ── felület ──────────────────────────────────────────────────────────────
     @app.get("/")
     def index():
+        from markupsafe import Markup
         return render_template("index.html", token=app.config["TOKEN"], version=__version__,
-                               native=bool(hooks.get("native")))
+                               native=bool(hooks.get("native")), icons=Markup(icons_svg))
 
     @app.get("/favicon.ico")
     def favicon():

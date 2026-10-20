@@ -76,3 +76,10 @@ def test_report_escapes_html():
                           "total_freed_bytes": 1, "total_files": 1}])
     assert "<script>alert(1)" not in html
     assert "&lt;script&gt;" in html
+
+
+def test_icons_inlined_in_page(client):
+    """Az ikonok a HTML-be ágyazva mennek ki — nem függnek a .svg MIME-típusától."""
+    html = client.get("/", base_url="http://127.0.0.1:5000").get_data(as_text=True)
+    assert '<symbol id="i-sparkles"' in html
+    assert "icons.svg#" not in html
