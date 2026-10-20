@@ -22,7 +22,13 @@ Csak a frissítés-ellenőrzéshez (a GitHub kiadási listájának lekérése). 
 `%LOCALAPPDATA%\PyCleaner` (hordozható módban az exe melletti `PyCleanerData`). Itt van a `pycleaner.log` naplófájl is, ami hibabejelentéskor hasznos.
 
 **Fut az ütemező, ha bezárom a programot?**
-Nem. Ha rendszeres tisztítást szeretnél, tedd a PyCleanert az indítópultba (Win+R → `shell:startup`, ide egy parancsikon).
+Windowson igen, ha az Ütemező oldalon bekapcsolod az *Akkor is fusson, ha a PyCleaner be van zárva* kapcsolót — ekkor a Windows Feladatütemezője indítja ablak nélkül. Linuxon és macOS-en csak a program futása alatt működik.
+
+**Mennyire biztonságos az indítópult-kezelő?**
+Ugyanazt a jelzőt állítja, mint a Windows Feladatkezelője: semmit nem töröl, a kikapcsolt elem bármikor (akár a Feladatkezelőből is) visszakapcsolható.
+
+**Angolul is használható?**
+Igen. Alapból a Windows nyelvét követi; a Beállítások → Nyelv pontban átállítható.
 
 **Böngészőben nyílik meg, nem külön ablakban.**
 Hiányzik a WebView2 futtatókörnyezet — lásd [[Telepítés]]. A böngészős mód is teljes értékű; ilyenkor a felületen a ⏻ gombbal állítható le a program.

@@ -150,6 +150,7 @@ main { overflow-y: auto; min-width: 0; scroll-behavior: smooth; }
 .tile-ic.warn { background: color-mix(in srgb, var(--warn) 15%, transparent); color: var(--warn); }
 .tile-ic.bad { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
 .tile-ic.ok { background: color-mix(in srgb, var(--ok) 14%, transparent); color: var(--ok); }
+.tile-ic.ac { background: var(--ac-soft); color: var(--ac-strong); }
 .grid { display: grid; gap: 14px; }
 .g2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 .g3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -196,11 +197,13 @@ main { overflow-y: auto; min-width: 0; scroll-behavior: smooth; }
 .chip.bad { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
 .chip.ac { background: var(--ac-soft); color: var(--ac-strong); }
 
-input[type=text], input[type=password], input[type=number], select {
+input[type=text], input[type=password], input[type=number], select, textarea {
   height: 34px; padding: 0 11px; border-radius: 6px; background: var(--surface-2);
   border: 1px solid var(--line-2); border-bottom-color: var(--tx-3); outline: none; min-width: 0;
 }
 input:focus, select:focus { border-bottom: 2px solid var(--ac); padding-bottom: 1px; }
+textarea { height: auto; padding: 8px 11px; resize: vertical; font: inherit; line-height: 1.4; }
+textarea:focus { outline: none; border-bottom: 2px solid var(--ac); }
 select { padding-right: 28px; }
 .field { display: grid; gap: 6px; }
 .field > span { font-size: 13px; color: var(--tx-2); font-weight: 500; }
@@ -289,6 +292,29 @@ select { padding-right: 28px; }
 .result-list div { display: flex; justify-content: space-between; gap: 12px; font-size: 13.5px; padding: 6px 0; border-bottom: 1px dashed var(--line); }
 .result-list div:last-child { border-bottom: 0; }
 
+/* ── gépállapot ────────────────────────────────────────────────────────── */
+.score-ring {
+  width: 112px; height: 112px; border-radius: 50%; display: grid; place-content: center; text-align: center;
+  border: 9px solid var(--ac); color: var(--ac-strong);
+}
+.score-ring b { font: 600 38px/1 var(--font-display); font-variant-numeric: tabular-nums; }
+.score-ring span { font-size: 12px; color: var(--tx-3); }
+.score-ring.ok { border-color: var(--ok); color: var(--ok); }
+.score-ring.warn { border-color: var(--warn); color: var(--warn); }
+.score-ring.bad { border-color: var(--bad); color: var(--bad); }
+.finding { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: start; padding: 12px 0; border-bottom: 1px solid var(--line); }
+.finding:first-child { padding-top: 0; }
+.finding:last-child { border-bottom: 0; padding-bottom: 0; }
+.finding .tile-ic { width: 32px; height: 32px; border-radius: 8px; }
+.finding .t { font-weight: 600; }
+.finding .d { font-size: 12.5px; color: var(--tx-3); margin-top: 1px; }
+.finding .a { font-size: 13px; color: var(--tx-2); margin-top: 3px; }
+.finding .a::before { content: "→ "; color: var(--tx-3); }
+.logbox {
+  margin: 0; padding: 12px 14px; border-radius: 8px; background: var(--surface-2); border: 1px solid var(--line);
+  font: 12px/1.55 var(--mono); max-height: 280px; overflow: auto; white-space: pre-wrap; color: var(--tx-2);
+}
+
 /* ── monitor ───────────────────────────────────────────────────────────── */
 .spark { width: 100%; height: 120px; display: block; margin-top: 10px; }
 .spark .area { fill: var(--ac-soft); }
@@ -309,6 +335,7 @@ table.tbl { width: 100%; border-collapse: collapse; font-size: 13.5px; }
 .tbl .r { text-align: right; }
 .tbl .w { width: 1%; white-space: nowrap; }
 .file-cell { min-width: 0; max-width: 560px; }
+.tbl td.grow-cell { max-width: 0; width: 100%; }   /* a többi oszlop kiférjen, a hosszú név kipontozódjon */
 .file-cell b { font-weight: 600; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .file-cell span { display: block; font-size: 12px; color: var(--tx-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; direction: rtl; text-align: left; }
 .bars { display: grid; gap: 12px; }

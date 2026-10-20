@@ -29,6 +29,8 @@ jobs:
           python -m pip install -r requirements-dev.txt
 
       - name: Tesztek
+        env:
+          PYC_SYSTEM_TESTS: "1"   # eldobható CI-gép: a registry- és Feladatütemező-tesztek is futhatnak
         run: python -m pytest -q
 
       - name: Verzió ellenőrzése
@@ -60,20 +62,42 @@ jobs:
           Stop-Process -Id $p.Id -Force
           if (-not $ok) { Get-Content "$env:LOCALAPPDATA\PyCleaner\pycleaner.log" -ErrorAction SilentlyContinue; throw "Az exe nem indult el." }
 
-      - name: Füstteszt — natív ablak (WebView2)
+      - name: Füstteszt — natív ablak (WebView2) és tálcaikon
         shell: pwsh
         run: |
-          $log = "$env:LOCALAPPDATA\PyCleaner\pycleaner.log"
+          $data = "$env:LOCALAPPDATA\PyCleaner"
+          New-Item -ItemType Directory $data -Force | Out-Null
+          '{"close_to_tray": true}' | Set-Content "$data\config.json" -Encoding utf8
+          $log = "$data\pycleaner.log"
           Remove-Item $log -ErrorAction SilentlyContinue
           $p = Start-Process dist\PyCleaner\PyCleaner.exe -PassThru
-          $ok = $false
+          $win = $false; $tray = $false
           foreach ($i in 1..40) {
             Start-Sleep -Milliseconds 500
-            if ((Test-Path $log) -and (Select-String -Path $log -Pattern "natív ablak fut" -Quiet)) { $ok = $true; break }
+            if (Test-Path $log) {
+              $win = Select-String -Path $log -Pattern "natív ablak fut" -Quiet
+              $tray = Select-String -Path $log -Pattern "tálcaikon fut" -Quiet
+              if ($win -and $tray) { break }
+            }
           }
           Get-Content $log -ErrorAction SilentlyContinue
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
-          if (-not $ok) { throw "A natív ablak nem indult el." }
+          Remove-Item "$data\config.json" -ErrorAction SilentlyContinue
+          if (-not $win) { throw "A natív ablak nem indult el." }
+          if (-not $tray) { throw "A tálcaikon nem indult el." }
+
+      - name: Füstteszt — ütemezett tisztítás ablak nélkül (--auto-clean)
+        shell: pwsh
+        run: |
+          $data = "$env:LOCALAPPDATA\PyCleaner"
+          '{"enabled": true, "interval_hours": 24, "categories": ["thumbnails"], "last_run": null}' | Set-Content "$data\schedule.json" -Encoding utf8
+          Remove-Item "$data\history.json" -ErrorAction SilentlyContinue
+          $p = Start-Process dist\PyCleaner\PyCleaner.exe -ArgumentList "--auto-clean" -PassThru
+          if (-not $p.WaitForExit(120000)) { Stop-Process -Id $p.Id -Force; throw "Az --auto-clean nem állt le 2 percen belül." }
+          $h = Get-Content "$data\history.json" -Raw -Encoding utf8 | ConvertFrom-Json
+          if (-not $h -or -not $h[0].auto) { throw "Az ütemezett tisztítás nem került az előzményekbe." }
+          "OK: $($h[0].total_freed), auto=$($h[0].auto)"
+          Remove-Item "$data\schedule.json", "$data\history.json" -ErrorAction SilentlyContinue
 
       # ── kódaláírás 1/2: a program exe-i (a telepítő már az aláírt exe-t csomagolja) ──
       - name: Aláíratlan exe-k feltöltése

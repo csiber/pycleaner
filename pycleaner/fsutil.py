@@ -9,14 +9,17 @@ from typing import Iterable
 
 
 def fmt(n: float) -> str:
+    """Ember által olvasható méret; magyar nyelvnél tizedesvesszővel."""
+    from .i18n import lang
+    sep = "," if lang() == "hu" else "."
     n = float(n or 0)
     if n < 1024:
         return f"{int(n)} B"
     for unit in ("KB", "MB"):
         n /= 1024
         if n < 1024:
-            return f"{n:.1f} {unit}".replace(".", ",")
-    return f"{n / 1024:.2f} GB".replace(".", ",")
+            return f"{n:.1f} {unit}".replace(".", sep)
+    return f"{n / 1024:.2f} GB".replace(".", sep)
 
 
 def _walk_files(path: str):

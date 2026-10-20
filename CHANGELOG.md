@@ -2,6 +2,20 @@
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/hu/1.1.0/) ajánlását követi, a verziózás [SemVer](https://semver.org/lang/hu/).
 
+## [5.1.0] — 2026-10-20
+
+### Új
+- **Gépállapot**: egy kattintásos felmérés — lemezek egészsége (SMART-állapot, kopás, hőmérséklet), szabad hely, vírusvédelem, Windows-frissítések, újraindításra váró frissítés, akkumulátor-kapacitás, indítópult — pontszámmal és javaslatokkal. Nyomtatható / PDF-be menthető riport, a Beállításokban megadható szervizfejléccel (név, elérhetőség, megjegyzés).
+- **Indítópult**: a bejelentkezéskor induló programok (Run-kulcsok, Indítópult mappák, bejelentkezéskor induló ütemezett feladatok) kiadóval, ki/be kapcsolóval. A kikapcsolás a Feladatkezelővel azonos módon történik, semmi nem törlődik.
+- **Programfrissítő**: a telepített programok frissítése a Windows beépített csomagkezelőjével (winget), kijelöléssel, csendben, élő naplóval.
+- **Programok**: telepített programok listája méret, dátum és kiadó szerint; eltávolítás a program saját eltávolítójával, utána a maradék mappák felkínálása (alapból kijelöletlenül, Lomtárba).
+- **Ütemező a Windows Feladatütemezőben**: az automatikus tisztítás akkor is lefut, ha a PyCleaner be van zárva (`--auto-clean`, ablak nélkül).
+- **Tálcaikon**: a Beállításokban kérhető, hogy bezáráskor a program a tálcára kerüljön (gyors tisztítás és kilépés a menüből).
+- **Angol nyelvű felület**: automatikusan a Windows nyelvét követi, a Beállításokban átállítható.
+
+### Javítva
+- A Gépállapot szabad-hely-szabálya nagy lemezen nem jelez tévesen (a százalék mellett az abszolút méretet is nézi).
+
 ## [5.0.1] — 2026-10-20
 
 ### Javítva

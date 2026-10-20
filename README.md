@@ -5,7 +5,7 @@
 <h1 align="center">PyCleaner</h1>
 
 <p align="center">
-  <b>Rendszertisztító és karbantartó Windowsra — natív ablakkal, magyarul, biztonságos alapbeállításokkal.</b><br>
+  <b>Rendszertisztító és karbantartó Windowsra — natív ablakkal, magyarul (és angolul), biztonságos alapbeállításokkal.</b><br>
   <a href="https://github.com/csiber/pycleaner/releases/latest"><img alt="Legújabb kiadás" src="https://img.shields.io/github/v/release/csiber/pycleaner?label=let%C3%B6lt%C3%A9s&color=2bb8e8"></a>
   <a href="https://github.com/csiber/pycleaner/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/csiber/pycleaner/actions/workflows/ci.yml/badge.svg"></a>
   <img alt="Windows 10/11" src="https://img.shields.io/badge/Windows-10%20%7C%2011-0078d4">
@@ -34,13 +34,19 @@ A `SHA256SUMS.txt` fájllal ellenőrizheted a letöltés épségét. Követelmé
 | 📡 **Élő monitor** | CPU- és memóriagrafikon, lapozófájl, lemez, hálózati sebesség, a legtöbb memóriát használó folyamatok |
 | 💽 **Lemezelemző** | Meghajtók, személyes mappák mérete, a legnagyobb fájlok — egy kattintással megmutatja őket az Intézőben |
 | 👥 **Duplikátumok** | Tartalom alapján (méret → első 64 KB → BLAKE2b), „mindenhol a legújabb marad” kijelöléssel |
+| 🩺 **Gépállapot** | Lemezek egészsége, szabad hely, vírusvédelem, frissítések, akkumulátor, indítópult — pontszám, javaslatok, nyomtatható riport saját szervizfejléccel |
+| 🚀 **Indítópult** | A bejelentkezéskor induló programok ki/be kapcsolása, a Feladatkezelővel azonos módon (semmi nem törlődik) |
+| ⬆️ **Programfrissítő** | A telepített programok frissítése egy kattintással a Windows beépített winget csomagkezelőjével |
+| 📦 **Programok** | Eltávolítás a program saját eltávolítójával, utána a maradék mappák felkínálása |
 | 🗝️ **Registry** | Óvatos keresés: árva eltávolító-bejegyzések, nem létező programra mutató indítási elemek, MUI-gyorsítótár — javítás előtt automatikus `.reg` mentés |
 | 🛠️ **Finomhangolás** | Előtelepített alkalmazások (Candy Crush, Clipchamp, Cortana…) és a OneDrive eltávolítása, visszaállítási pont, újraindítás rendszergazdaként |
-| ⏰ **Ütemező** | Automatikus háttértisztítás, amíg a program fut |
+| ⏰ **Ütemező** | Automatikus háttértisztítás — a Windows Feladatütemezőjével akkor is, ha a program be van zárva; kérésre tálcaikon |
 | 📊 **Előzmények** | Minden tisztítás naplója, HTML-riport és JSON-export, törlés előtti ZIP-mentések |
-| 🎨 **Megjelenés** | Világos / sötét / rendszertéma, hat kiemelőszín, profilok (pl. saját és családi gép) |
+| 🎨 **Megjelenés** | Magyar / angol felület, világos / sötét / rendszertéma, hat kiemelőszín, profilok (pl. saját és családi gép) |
 
 <p align="center">
+  <img src="docs/screenshots/gepallapot.png" alt="Gépállapot" width="49%">
+  <img src="docs/screenshots/programfrissito.png" alt="Programfrissítő" width="49%">
   <img src="docs/screenshots/tisztitas.png" alt="Tisztítás" width="49%">
   <img src="docs/screenshots/finomhangolas.png" alt="Finomhangolás" width="49%">
 </p>
@@ -75,7 +81,7 @@ pip install -r requirements.txt
 python main.py                    # natív ablak; --browser: böngészőben, --no-open: csak a szerver
 ```
 
-Python 3.10 vagy újabb kell. Ha a csomagok telepítése kimaradt, a `python main.py` kiírja, mi hiányzik, és felajánlja a telepítést. Linuxon és macOS-en az alapfunkciók (tisztítás, monitor, lemezelemző, duplikátumok) működnek, a Registry és a Finomhangolás csak Windowson jelenik meg.
+Python 3.10 vagy újabb kell. A rendszert ténylegesen módosító Windows-tesztek (registry, Feladatütemező) csak `PYC_SYSTEM_TESTS=1` mellett futnak — a CI eldobható gépén be van kapcsolva, saját gépen ne. Ha a csomagok telepítése kimaradt, a `python main.py` kiírja, mi hiányzik, és felajánlja a telepítést. Linuxon és macOS-en az alapfunkciók (tisztítás, monitor, lemezelemző, duplikátumok) működnek; a „Gép karbantartása” oldalak (Gépállapot, Indítópult, Programfrissítő, Programok, Registry, Finomhangolás) csak Windowson jelennek meg.
 
 ### Windows-build
 
@@ -91,14 +97,13 @@ Beállítások, előzmények, mentések és napló: `%LOCALAPPDATA%\PyCleaner`. 
 
 ## Állapot
 
-**5.0.1 — 2026-10-20:** javítókiadás (forrásból indítás hiányzó csomagokkal, Lomtár-biztonság); az 5.0.0 (10-18) teljes újraírás volt — lásd [CHANGELOG](CHANGELOG.md). Tesztelve Windows 11 (26200) és Linux alatt; a CI Windows és Ubuntu alatt, Python 3.10 és 3.13 verzióval futtatja a teszteket.
+**5.1.0 — 2026-10-20:** Gépállapot-felmérés és -riport, Indítópult, Programfrissítő (winget), Programok, Feladatütemező-integráció, tálcaikon, angol felület — lásd [CHANGELOG](CHANGELOG.md). Tesztelve Windows 11 (26200) és Linux alatt; a CI Windows és Ubuntu alatt, Python 3.10 és 3.13 verzióval futtatja a teszteket.
 
 Nyitott tételek:
 
 - [ ] Kódaláírás — a workflow kész rá (`.signpath/`), a SignPath Foundation jóváhagyására vár
-- [ ] Az ütemező Windows Feladatütemezőbe kötése, hogy zárt programmal is fusson
-- [ ] Indítópult-kezelő (automatikusan induló programok ki/be kapcsolása)
-- [ ] Angol nyelvű felület
+- [ ] Felvétel a winget-katalógusba (`winget install csiber.PyCleaner`)
+- [ ] A Gépállapot-riport közvetlen PDF-exportja (most: böngészőből nyomtatás / PDF)
 
 ## Licenc
 

@@ -27,9 +27,16 @@ pycleaner/
   tweaks.py              Appx-csomagok, OneDrive
   winapi.py              ctypes: admin-ellenőrzés, UAC-újraindítás, Lomtár, visszaállítási pont
   analyzer.py            mappaméretek, nagy fájlok
+  health.py              gépállapot-felmérés (PowerShell/CIM), szabályok, nyomtatható riport
+  startup.py             indítópult: Run-kulcsok, Startup mappák, bejelentkezési feladatok, StartupApproved
+  winget.py              programfrissítő: `winget upgrade` táblázat-feldolgozás, frissítés háttérmunkában
+  programs.py            telepített programok, eltávolítás, maradékkeresés
+  jobs.py                háttérmunkák (a felület lekérdezi az állapotukat)
+  tray.py                tálcaikon (pystray)
+  i18n.py                magyar/angol: a forrásszöveg magyar, az angol a static/i18n-en.json-ből
   duplicates.py          duplikátumkeresés (méret → 64 KB → BLAKE2b)
   monitor.py             psutil-mintavétel (SSE)
-  scheduler.py           háttérütemező
+  scheduler.py           háttérütemező + Windows Feladatütemező (--auto-clean)
   store.py               JSON-tárolás (atomikus írás), profilok, jelszó-hash
   updates.py             GitHub Releases ellenőrzés
   report.py              HTML-riport
@@ -40,6 +47,14 @@ tests/                   pytest
 ```
 
 A felület keretrendszer nélküli JavaScript; minden dinamikus szöveg `esc()`-en megy át, inline szkript nincs (a CSP ezt meg is követeli).
+
+### Fordítás
+
+Minden felirat magyarul van a kódban, `t("…")` (Python) vagy `t('…')` / `tt('…')` (JS) hívásban; az angol megfelelő a `pycleaner/static/i18n-en.json`-ben. Új szöveg felvételekor a fordítást is add hozzá — a `test_every_ui_string_is_translated` teszt elbukik, ha valamelyik hiányzik.
+
+### Tesztek, amelyek a rendszert módosítják
+
+Az indítópult- és Feladatütemező-tesztek valódi registry-bejegyzést és ütemezett feladatot hoznak létre, majd törölnek. Ezek csak `PYC_SYSTEM_TESTS=1` mellett futnak (a CI eldobható Windows-gépén be van kapcsolva) — saját, használt gépen ne kapcsold be.
 
 ## Új tisztítási kategória
 

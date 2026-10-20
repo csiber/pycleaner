@@ -16,6 +16,7 @@ from pathlib import Path
 from . import store, winapi
 from .fsutil import candidates, clean_dir, existing, expand, fmt, glob_dirs, measure
 from .paths import SYSTEM, backups_dir
+from .i18n import t
 
 WIN = SYSTEM == "Windows"
 MAC = SYSTEM == "Darwin"
@@ -68,81 +69,80 @@ def _chromium_caches() -> list[str]:
 
 def _targets() -> dict[str, list[Target]]:
     home = str(Path.home())
-    t: dict[str, list[Target]] = {}
+    tm: dict[str, list[Target]] = {}
     if WIN:
         la, pd, wd = _env("LOCALAPPDATA"), _env("ProgramData"), _env("WINDIR") or r"C:\Windows"
-        t["temp"] = [Target(tempfile.gettempdir()), Target(os.path.join(la, "Temp")),
+        tm["temp"] = [Target(tempfile.gettempdir()), Target(os.path.join(la, "Temp")),
                      Target(os.path.join(wd, "Temp"))]
         firefox = glob_dirs(os.path.join(la, "Mozilla", "Firefox", "Profiles"), "cache2")
-        t["browser"] = [Target(p) for p in _chromium_caches() + firefox]
-        t["thumbnails"] = [Target(os.path.join(la, "Microsoft", "Windows", "Explorer"),
+        tm["browser"] = [Target(p) for p in _chromium_caches() + firefox]
+        tm["thumbnails"] = [Target(os.path.join(la, "Microsoft", "Windows", "Explorer"),
                                   suffixes=(".db",), prefix=("thumbcache_", "iconcache_"))]
-        t["logs"] = [Target(os.path.join(wd, "Logs"), min_age=7, suffixes=(".log", ".old", ".bak", ".etl")),
+        tm["logs"] = [Target(os.path.join(wd, "Logs"), min_age=7, suffixes=(".log", ".old", ".bak", ".etl")),
                      Target(os.path.join(wd, "Panther"), min_age=30, suffixes=(".log",))]
-        t["crash"] = [Target(os.path.join(la, "CrashDumps")),
+        tm["crash"] = [Target(os.path.join(la, "CrashDumps")),
                       Target(os.path.join(la, "Microsoft", "Windows", "WER", "ReportArchive")),
                       Target(os.path.join(la, "Microsoft", "Windows", "WER", "ReportQueue")),
                       Target(os.path.join(pd, "Microsoft", "Windows", "WER", "ReportArchive")),
                       Target(os.path.join(pd, "Microsoft", "Windows", "WER", "ReportQueue")),
                       Target(os.path.join(wd, "Minidump"))]
-        t["winupdate"] = [Target(os.path.join(wd, "SoftwareDistribution", "Download"))]
-        t["shader"] = [Target(os.path.join(la, "D3DSCache")),
+        tm["winupdate"] = [Target(os.path.join(wd, "SoftwareDistribution", "Download"))]
+        tm["shader"] = [Target(os.path.join(la, "D3DSCache")),
                        Target(os.path.join(la, "NVIDIA", "DXCache")),
                        Target(os.path.join(la, "NVIDIA", "GLCache")),
                        Target(os.path.join(la, "AMD", "DxCache")),
                        Target(os.path.join(la, "AMD", "DxcCache")),
                        Target(os.path.join(la, "AMD", "VkCache"))]
     elif MAC:
-        t["temp"] = [Target(tempfile.gettempdir(), min_age=1, skip_hidden_top=True)]
+        tm["temp"] = [Target(tempfile.gettempdir(), min_age=1, skip_hidden_top=True)]
         lib = os.path.join(home, "Library")
-        t["browser"] = [Target(os.path.join(lib, "Caches", "Google", "Chrome")),
+        tm["browser"] = [Target(os.path.join(lib, "Caches", "Google", "Chrome")),
                         Target(os.path.join(lib, "Caches", "Firefox")),
                         Target(os.path.join(lib, "Caches", "BraveSoftware")),
                         Target(os.path.join(lib, "Caches", "Microsoft Edge"))]
-        t["logs"] = [Target(os.path.join(lib, "Logs"), min_age=7, suffixes=(".log", ".old"))]
-        t["crash"] = [Target(os.path.join(lib, "Logs", "DiagnosticReports"))]
-        t["trash"] = [Target(os.path.join(home, ".Trash"))]
+        tm["logs"] = [Target(os.path.join(lib, "Logs"), min_age=7, suffixes=(".log", ".old"))]
+        tm["crash"] = [Target(os.path.join(lib, "Logs", "DiagnosticReports"))]
+        tm["trash"] = [Target(os.path.join(home, ".Trash"))]
     else:
         cache = _env("XDG_CACHE_HOME") or os.path.join(home, ".cache")
-        t["temp"] = [Target("/tmp", min_age=1, skip_hidden_top=True),
+        tm["temp"] = [Target("/tmp", min_age=1, skip_hidden_top=True),
                      Target("/var/tmp", min_age=7, skip_hidden_top=True)]
-        t["browser"] = [Target(os.path.join(cache, n)) for n in
+        tm["browser"] = [Target(os.path.join(cache, n)) for n in
                         ("google-chrome", "chromium", "BraveSoftware", "microsoft-edge", "mozilla")]
-        t["thumbnails"] = [Target(os.path.join(cache, "thumbnails")),
+        tm["thumbnails"] = [Target(os.path.join(cache, "thumbnails")),
                            Target(os.path.join(home, ".thumbnails"))]
-        t["logs"] = [Target("/var/log", suffixes=(".gz", ".old", ".1", ".xz", ".bz2"))]
-        t["crash"] = [Target("/var/crash")]
+        tm["logs"] = [Target("/var/log", suffixes=(".gz", ".old", ".1", ".xz", ".bz2"))]
+        tm["crash"] = [Target("/var/crash")]
         data = _env("XDG_DATA_HOME") or os.path.join(home, ".local", "share")
-        t["trash"] = [Target(os.path.join(data, "Trash", "files")),
+        tm["trash"] = [Target(os.path.join(data, "Trash", "files")),
                       Target(os.path.join(data, "Trash", "info"))]
-    return t
+    return tm
 
 
 def categories() -> list[Category]:
-    t = _targets()
+    tm = _targets()
     cats = [
-        Category("temp", "Ideiglenes fájlok", "A rendszer és a programok által hátrahagyott átmeneti fájlok.",
-                 "file-text", targets=t.get("temp", [])),
-        Category("browser", "Böngésző-gyorsítótár",
-                 "Chrome, Edge, Brave, Vivaldi, Opera és Firefox gyorsítótára. Jelszavak, előzmények, "
-                 "sütik és könyvjelzők érintetlenek maradnak.", "globe", targets=t.get("browser", [])),
-        Category("thumbnails", "Bélyegkép-gyorsítótár", "Az Intéző képelőnézetei; szükség szerint újraépülnek.",
-                 "image", targets=t.get("thumbnails", [])),
-        Category("crash", "Hibajelentések és memóriaképek", "Összeomlási dumpok és Windows-hibajelentések.",
-                 "triangle-alert", targets=t.get("crash", [])),
-        Category("logs", "Régi naplófájlok", "Legalább egy hetes rendszernaplók és rotált naplók.",
-                 "scroll-text", default=False, admin=WIN, targets=t.get("logs", [])),
-        Category("winupdate", "Windows Update gyorsítótár",
-                 "Már telepített frissítések letöltött csomagjai és a kézbesítésoptimalizálás tára.",
-                 "download", default=False, admin=True, targets=t.get("winupdate", [])),
-        Category("shader", "Shader-gyorsítótár", "DirectX/NVIDIA/AMD shader-tár.", "zap", default=False,
-                 caution="A játékok első indításkor újraépítik, ez rövid akadozással járhat.",
-                 targets=t.get("shader", [])),
-        Category("trash", "Lomtár", "A Lomtár végleges ürítése.", "trash-2", default=False,
-                 caution="Végleges törlés — utána nem állíthatók vissza a fájlok.",
-                 targets=t.get("trash", [])),
-        Category("custom", "Egyéni mappák", "A Beállításokban megadott saját mappák tartalma.", "folder",
-                 default=False, caution="A megadott mappák teljes tartalmát törli."),
+        Category("temp", t("Ideiglenes fájlok"), t("A rendszer és a programok által hátrahagyott átmeneti fájlok."),
+                 "file-text", targets=tm.get("temp", [])),
+        Category("browser", t("Böngésző-gyorsítótár"),
+                 t("Chrome, Edge, Brave, Vivaldi, Opera és Firefox gyorsítótára. Jelszavak, előzmények, sütik és könyvjelzők érintetlenek maradnak."), "globe", targets=tm.get("browser", [])),
+        Category("thumbnails", t("Bélyegkép-gyorsítótár"), t("Az Intéző képelőnézetei; szükség szerint újraépülnek."),
+                 "image", targets=tm.get("thumbnails", [])),
+        Category("crash", t("Hibajelentések és memóriaképek"), t("Összeomlási dumpok és Windows-hibajelentések."),
+                 "triangle-alert", targets=tm.get("crash", [])),
+        Category("logs", t("Régi naplófájlok"), t("Legalább egy hetes rendszernaplók és rotált naplók."),
+                 "scroll-text", default=False, admin=WIN, targets=tm.get("logs", [])),
+        Category("winupdate", t("Windows Update gyorsítótár"),
+                 t("Már telepített frissítések letöltött csomagjai és a kézbesítésoptimalizálás tára."),
+                 "download", default=False, admin=True, targets=tm.get("winupdate", [])),
+        Category("shader", t("Shader-gyorsítótár"), t("DirectX/NVIDIA/AMD shader-tár."), "zap", default=False,
+                 caution=t("A játékok első indításkor újraépítik, ez rövid akadozással járhat."),
+                 targets=tm.get("shader", [])),
+        Category("trash", t("Lomtár"), t("A Lomtár végleges ürítése."), "trash-2", default=False,
+                 caution=t("Végleges törlés — utána nem állíthatók vissza a fájlok."),
+                 targets=tm.get("trash", [])),
+        Category("custom", t("Egyéni mappák"), t("A Beállításokban megadott saját mappák tartalma."), "folder",
+                 default=False, caution=t("A megadott mappák teljes tartalmát törli.")),
     ]
     out = []
     for c in cats:

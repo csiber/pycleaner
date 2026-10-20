@@ -1,0 +1,10 @@
+   - 
+   \ 
+Name                                                Id                        Version        Available     Source
+-------------------------------------------------------------------------------------------------------------------
+7-Zip 26.03 (x64 edition)                           7zip.7zip                 26.03.00.0     26.04         winget
+AnyDesk                                             AnyDesk.AnyDesk           ad 9.7.0       9.8.2         winget
+Python Launcher                                     Python.Launcher           < 3.14.7       3.14.7        winget
+Windows terminál                                    Microsoft.WindowsTerminal 1.24.12741.0   1.25.2733.0   winget
+Some Very Long Application Name That Gets Truncat…  Vendor.LongNa…            1.0            2.0           winget
+5 upgrades available.

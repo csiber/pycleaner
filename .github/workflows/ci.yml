@@ -27,4 +27,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install flask psutil send2trash pytest
       - name: Tesztek
+        env:
+          PYC_SYSTEM_TESTS: "1"   # eldobható CI-gép: a registry- és Feladatütemező-tesztek is futhatnak
         run: python -m pytest -q

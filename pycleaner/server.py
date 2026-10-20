@@ -17,9 +17,10 @@ from datetime import datetime
 
 from flask import Flask, Response, abort, jsonify, render_template, request, send_from_directory
 
-from . import (__version__, analyzer, cleaner, duplicates, monitor, registry, report, scheduler, store,
-               tweaks, updates, winapi)
+from . import (__version__, analyzer, cleaner, duplicates, health, i18n, jobs, monitor, programs, registry, report,
+               scheduler, startup, store, tweaks, updates, winapi, winget)
 from .paths import backups_dir, data_dir, registry_backups_dir, resource_dir
+from .i18n import t
 
 ALLOWED_HOSTS = {"127.0.0.1", "localhost", "[::1]"}
 
@@ -34,6 +35,11 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
     offered: set[str] = set()          # törölhető útvonalak (amiket mi listáztunk)
     offered_lock = threading.Lock()
     reg_cache: dict[int, dict] = {}
+    startup_cache: dict[int, dict] = {}
+    program_cache: dict[int, dict] = {}
+    winget_cache: dict = {"ids": set(), "count": None}
+    leftover_ok: set[str] = set()
+    last_health: dict = {}
 
     def offer(paths):
         with offered_lock:
@@ -80,7 +86,7 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
     # ── alapadatok ───────────────────────────────────────────────────────────
     @app.get("/api/bootstrap")
     def bootstrap():
-        return jsonify({"version": __version__, "system": monitor.system_info(),
+        return jsonify({"version": __version__, "lang": i18n.lang(), "system": monitor.system_info(),
                         "categories": cleaner.category_meta(), "config": store.public_config(),
                         "schedule": store.load_schedule(), "native": bool(hooks.get("native")),
                         "can_pick_folder": bool(hooks.get("pick_folder")), "home": os.path.expanduser("~"),
@@ -137,7 +143,7 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
         b = body()
         root = _root(b)
         if not root:
-            return jsonify({"error": "A mappa nem létezik."}), 400
+            return jsonify({"error": t("A mappa nem létezik.")}), 400
         items = analyzer.large_files(root, float(b.get("min_mb", 100) or 100))
         offer(i["path"] for i in items)
         return jsonify({"root": root, "files": items})
@@ -147,7 +153,7 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
         b = body()
         root = _root(b)
         if not root:
-            return jsonify({"error": "A mappa nem létezik."}), 400
+            return jsonify({"error": t("A mappa nem létezik.")}), 400
         r = duplicates.find(root, int(b.get("min_kb", 100) or 100))
         offer(f["path"] for g in r["groups"] for f in g["files"])
         r["root"] = root
@@ -161,11 +167,11 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
         for p in b.get("paths", [])[:500]:
             p = str(p)
             if not is_offered(p):
-                out.append({"path": p, "ok": False, "error": "Ezt a fájlt nem a PyCleaner listázta."})
+                out.append({"path": p, "ok": False, "error": t("Ezt a fájlt nem a PyCleaner listázta.")})
                 continue
             try:
                 if not os.path.isfile(p) or os.path.islink(p):
-                    raise FileNotFoundError("A fájl már nem létezik.")
+                    raise FileNotFoundError(t("A fájl már nem létezik."))
                 send_to_trash(p)
                 out.append({"path": p, "ok": True})
             except Exception as e:  # noqa: BLE001
@@ -198,7 +204,7 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
         for i in body().get("ids", []):
             issue = reg_cache.get(int(i)) if str(i).isdigit() else None
             if not issue:
-                out.append({"id": i, "ok": False, "msg": "Ismeretlen elem — futtasd újra a keresést."})
+                out.append({"id": i, "ok": False, "msg": t("Ismeretlen elem — futtasd újra a keresést.")})
                 continue
             ok, msg = registry.fix(issue)
             out.append({"id": i, "ok": ok, "msg": msg})
@@ -221,10 +227,19 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
     def set_schedule():
         b = body()
         b.pop("last_run", None)
+        prev = store.load_schedule()
         s = store.save_schedule(b)
         if s["enabled"]:
             scheduler.start()
-        return jsonify(s)
+        task = {"ok": True, "msg": ""}
+        relevant = ("enabled", "use_task", "interval_hours")
+        if winapi.IS_WINDOWS and (s["use_task"] or prev["use_task"]) and any(prev[k] != s[k] for k in relevant):
+            if s["enabled"] and s["use_task"]:
+                ok, msg = scheduler.register_task(s["interval_hours"])
+            else:
+                ok, msg = scheduler.unregister_task()
+            task = {"ok": ok, "msg": msg}
+        return jsonify(dict(s, task=task))
 
     # ── beállítások / profilok ───────────────────────────────────────────────
     @app.get("/api/config")
@@ -241,7 +256,7 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
     def new_profile():
         name = str(body().get("name", "")).strip()
         if not name:
-            return jsonify({"error": "Adj nevet a profilnak."}), 400
+            return jsonify({"error": t("Adj nevet a profilnak.")}), 400
         store.create_profile(name)
         return jsonify(store.public_config())
 
@@ -266,9 +281,9 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
     def validate_dir():
         p = os.path.expandvars(os.path.expanduser(str(body().get("path", "")).strip()))
         if not p or not os.path.isdir(p):
-            return jsonify({"ok": False, "msg": "A mappa nem létezik."})
+            return jsonify({"ok": False, "msg": t("A mappa nem létezik.")})
         if cleaner.is_protected(p):
-            return jsonify({"ok": False, "msg": "Ez rendszer- vagy személyes mappa, ezt nem engedem üríteni."})
+            return jsonify({"ok": False, "msg": t("Ez rendszer- vagy személyes mappa, ezt nem engedem üríteni.")})
         return jsonify({"ok": True, "path": os.path.normpath(p)})
 
     # ── előzmények / export ──────────────────────────────────────────────────
@@ -344,8 +359,125 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
 
     @app.post("/api/tweaks/restore_point")
     def restore_point():
-        ok, msg = winapi.create_restore_point("PyCleaner — módosítás előtt")
+        ok, msg = winapi.create_restore_point("PyCleaner")
         return jsonify({"ok": ok, "msg": msg})
+
+    # ── háttérmunkák ─────────────────────────────────────────────────────────
+    @app.get("/api/jobs/<jid>")
+    def job_status(jid):
+        j = jobs.get(jid)
+        return (jsonify(j), 200) if j else (jsonify({"error": t("Ismeretlen munka.")}), 404)
+
+    # ── indítópult ───────────────────────────────────────────────────────────
+    @app.get("/api/startup")
+    def startup_list():
+        items = startup.list_items()
+        startup_cache.clear()
+        startup_cache.update({i["id"]: i for i in items})
+        return jsonify({"items": items, "supported": winapi.IS_WINDOWS, "is_admin": winapi.is_admin()})
+
+    @app.post("/api/startup/toggle")
+    def startup_toggle():
+        b = body()
+        item = startup_cache.get(int(b.get("id", -1))) if str(b.get("id", "")).isdigit() else None
+        if not item:
+            return jsonify({"ok": False, "msg": t("Ismeretlen elem — frissítsd a listát.")})
+        ok, msg = startup.set_enabled(item, bool(b.get("enabled")))
+        if ok:
+            item["enabled"] = bool(b.get("enabled"))
+        return jsonify({"ok": ok, "msg": msg, "item": item})
+
+    # ── programfrissítő (winget) ─────────────────────────────────────────────
+    @app.get("/api/winget")
+    def winget_list():
+        r = winget.list_upgrades()
+        winget_cache["ids"] = {p["id"] for p in r.get("packages", []) if not p["truncated"]}
+        winget_cache["count"] = len(r.get("packages", []))
+        return jsonify(r)
+
+    @app.post("/api/winget/upgrade")
+    def winget_upgrade():
+        ids = [str(i) for i in body().get("ids", []) if str(i) in winget_cache["ids"]]
+        if not ids:
+            return jsonify({"error": t("Nincs kiválasztott, frissíthető csomag — frissítsd a listát.")}), 400
+        if jobs.running("winget"):
+            return jsonify({"error": t("Már fut egy frissítés.")}), 409
+        jid = jobs.start("winget", t("Programfrissítés"), winget.upgrade, ids)
+        return jsonify({"job": jid})
+
+    # ── programok eltávolítása ───────────────────────────────────────────────
+    @app.get("/api/programs")
+    def programs_list():
+        items = programs.list_programs()
+        program_cache.clear()
+        program_cache.update({i["id"]: i for i in items})
+        public = [{k: v for k, v in i.items() if k not in ("uninstall", "quiet")} for i in items]
+        return jsonify({"programs": public, "supported": winapi.IS_WINDOWS, "is_admin": winapi.is_admin()})
+
+    @app.post("/api/programs/uninstall")
+    def programs_uninstall():
+        b = body()
+        item = program_cache.get(int(b.get("id", -1))) if str(b.get("id", "")).isdigit() else None
+        if not item:
+            return jsonify({"error": t("Ismeretlen program — frissítsd a listát.")}), 400
+        if jobs.running("uninstall"):
+            return jsonify({"error": t("Már fut egy eltávolítás.")}), 409
+
+        def run(job, it):
+            res = programs.run_uninstall(job, it)
+            leftover_ok.update(os.path.normcase(os.path.abspath(x["path"])) for x in res.get("leftovers", []))
+            return res
+        return jsonify({"job": jobs.start("uninstall", item["name"], run, item)})
+
+    @app.post("/api/programs/leftovers")
+    def programs_leftovers():
+        return jsonify({"results": programs.remove_leftovers([str(p) for p in body().get("paths", [])][:50], leftover_ok)})
+
+    # ── gépállapot ───────────────────────────────────────────────────────────
+    @app.post("/api/health/run")
+    def health_run():
+        running = jobs.running("health")
+        if running:
+            return jsonify({"job": running[0]["id"]})
+
+        def run(job):
+            d = health.collect(job)
+            if winget_cache["count"] is not None and d.get("findings") is not None:
+                d["winget_updates"] = winget_cache["count"]
+                d["findings"] = health.evaluate(d)
+                bad = sum(1 for f in d["findings"] if f["level"] == "bad")
+                warn = sum(1 for f in d["findings"] if f["level"] == "warn")
+                d["score"] = max(0, min(100, 100 - 15 * bad - 5 * warn))
+            last_health.clear()
+            last_health.update(d)
+            return d
+        return jsonify({"job": jobs.start("health", t("Gépállapot-felmérés"), run)})
+
+    @app.get("/api/health/last")
+    def health_last():
+        return jsonify(last_health or None)
+
+    @app.post("/api/health/open")
+    def health_open():
+        if not last_health:
+            return jsonify({"ok": False, "msg": t("Előbb futtasd a felmérést.")})
+        path = health.save_report(last_health, store.load_config().get("service"))
+        import webbrowser
+        from pathlib import Path
+        webbrowser.open(Path(path).as_uri())
+        return jsonify({"ok": True, "path": path})
+
+    @app.get("/api/health/report")
+    def health_download():
+        if not last_health:
+            abort(404)
+        return _download(health.report_html(last_health, store.load_config().get("service")), "text/html",
+                         f"gepallapot_{datetime.now():%Y%m%d_%H%M}.html")
+
+    # ── ütemezett feladat ────────────────────────────────────────────────────
+    @app.get("/api/schedule/task")
+    def schedule_task():
+        return jsonify(scheduler.task_status())
 
     # ── rendszer ─────────────────────────────────────────────────────────────
     @app.post("/api/admin/relaunch")
@@ -353,7 +485,7 @@ def create_app(token: str | None = None, *, hooks: dict | None = None) -> Flask:
         if winapi.relaunch_elevated():
             threading.Thread(target=_quit, args=(hooks,), daemon=True).start()
             return jsonify({"ok": True})
-        return jsonify({"ok": False, "msg": "Az emelt jogú indítás meg lett szakítva."})
+        return jsonify({"ok": False, "msg": t("Az emelt jogú indítás meg lett szakítva.")})
 
     @app.post("/api/open_url")
     def open_url():

@@ -91,10 +91,11 @@ def reveal(path: str) -> bool:
 # ── Visszaállítási pont ──────────────────────────────────────────────────────
 
 def create_restore_point(description: str = "PyCleaner") -> tuple[bool, str]:
+    from .i18n import t
     if not IS_WINDOWS:
-        return False, "Csak Windowson érhető el."
+        return False, t("Csak Windowson érhető el.")
     if not is_admin():
-        return False, "Rendszergazdai jog szükséges."
+        return False, t("Rendszergazdai jog szükséges.")
     desc = description.replace("'", "")
     r = powershell(
         "Enable-ComputerRestore -Drive \"$env:SystemDrive\\\" -ErrorAction SilentlyContinue;"
@@ -103,8 +104,34 @@ def create_restore_point(description: str = "PyCleaner") -> tuple[bool, str]:
         timeout=300)
     if r.returncode == 0 and "PYC_SKIPPED" in r.stdout:
         # alapból a Windows 24 óránként csak egy pontot enged — nem hiba, de nem is új pont
-        return True, "Az elmúlt 24 órában már készült visszaállítási pont, a Windows nem hozott létre újat."
+        return True, t("Az elmúlt 24 órában már készült visszaállítási pont, a Windows nem hozott létre újat.")
     if r.returncode == 0:
-        return True, "Visszaállítási pont létrehozva."
+        return True, t("Visszaállítási pont létrehozva.")
     msg = (r.stderr or r.stdout).strip().splitlines()
     return False, msg[0] if msg else "Ismeretlen hiba."
+
+
+# ── fájlverzió-információ (kiadó neve) ───────────────────────────────────────
+
+def file_company(path: str) -> str:
+    """Az exe „CompanyName” verzióadata (pl. „Google LLC”), vagy üres szöveg."""
+    if not IS_WINDOWS or not path or not os.path.isfile(path):
+        return ""
+    try:
+        ver = ctypes.windll.version
+        size = ver.GetFileVersionInfoSizeW(path, None)
+        if not size:
+            return ""
+        buf = ctypes.create_string_buffer(size)
+        if not ver.GetFileVersionInfoW(path, 0, size, buf):
+            return ""
+        ptr, ln = ctypes.c_void_p(), ctypes.c_uint()
+        if not ver.VerQueryValueW(buf, "\\VarFileInfo\\Translation", ctypes.byref(ptr), ctypes.byref(ln)) or not ln.value:
+            return ""
+        lang, cp = ctypes.cast(ptr, ctypes.POINTER(ctypes.c_ushort * 2)).contents
+        sub = f"\\StringFileInfo\\{lang:04x}{cp:04x}\\CompanyName"
+        if ver.VerQueryValueW(buf, sub, ctypes.byref(ptr), ctypes.byref(ln)) and ln.value:
+            return ctypes.wstring_at(ptr, ln.value).rstrip("\x00").strip()
+    except Exception:  # noqa: BLE001
+        pass
+    return ""

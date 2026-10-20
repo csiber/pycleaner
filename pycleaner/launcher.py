@@ -58,12 +58,16 @@ def main(argv=None):
     ap.add_argument("--browser", action="store_true", help="natív ablak helyett az alapértelmezett böngészőben nyílik")
     ap.add_argument("--no-open", action="store_true", help="csak a szerver indul (fejlesztéshez)")
     ap.add_argument("--port", type=int, default=0, help="rögzített port (alapból véletlen szabad port)")
+    ap.add_argument("--auto-clean", action="store_true", help="ütemezett tisztítás ablak nélkül (a Feladatütemező hívja)")
     ap.add_argument("--version", action="version", version=f"{APP_NAME} {__version__}")
     args = ap.parse_args(argv)
 
     has_console = sys.stdout is not None and not getattr(sys, "frozen", False)
     _setup_logging(has_console)
     log = logging.getLogger("pycleaner")
+
+    if args.auto_clean:
+        sys.exit(scheduler.auto_clean())
 
     from .server import create_app
     token = secrets.token_urlsafe(32)
@@ -115,7 +119,41 @@ def _run_native(url: str, hooks: dict, log) -> bool:
             res = win.create_file_dialog(webview.FOLDER_DIALOG)
             return res[0] if res else None
 
-        hooks.update(native=True, pick_folder=pick_folder, quit=win.destroy)
+        from . import cleaner, store
+        from .i18n import t
+        from .tray import Tray
+        state = {"quitting": False, "told": False}
+
+        def quit_app():
+            state["quitting"] = True
+            tray.stop()
+            win.destroy()
+
+        def show():
+            win.show()
+            win.restore()
+
+        def quick_clean():
+            ids = [c["id"] for c in cleaner.category_meta() if c["default"] and not c["locked"]]
+            return cleaner.clean(ids)
+
+        tray = Tray(show, quit_app, quick_clean)
+
+        def on_closing():
+            # bezáráskor a tálcára kerül, ha a Beállításokban kérték (és a tálcaikon elindult)
+            if not state["quitting"] and store.load_config().get("close_to_tray") and tray.ensure():
+                win.hide()
+                if not state["told"]:
+                    tray.notify(t("A PyCleaner a tálcán fut tovább. Kilépés: jobb klikk az ikonon."))
+                    state["told"] = True
+                return False
+            tray.stop()
+            return True
+
+        win.events.closing += on_closing
+        if store.load_config().get("close_to_tray"):
+            tray.ensure()
+        hooks.update(native=True, pick_folder=pick_folder, quit=quit_app)
         if hasattr(webview, "settings"):
             webview.settings["ALLOW_DOWNLOADS"] = True
             webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True

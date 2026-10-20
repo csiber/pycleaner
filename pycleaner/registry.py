@@ -10,6 +10,7 @@ from datetime import datetime
 
 from . import winapi
 from .paths import SYSTEM, registry_backups_dir
+from .i18n import t
 
 UNINSTALL_KEYS = (
     ("HKLM", r"SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall"),
@@ -116,8 +117,8 @@ def scan() -> list[dict]:
                 if (_looks_absolute(loc) and not os.path.exists(loc)
                         and exe and _looks_absolute(exe) and not os.path.exists(exe)):
                     issues.append({"type": "uninstall", "hive": hive, "key": f"{path}\\{sub}", "value": None,
-                                   "title": f"Árva eltávolító-bejegyzés: {name}",
-                                   "detail": f"Hiányzó mappa: {loc}", "admin": hive == "HKLM"})
+                                   "title": t("Árva eltávolító-bejegyzés: {name}", name=name),
+                                   "detail": t("Hiányzó mappa: {loc}", loc=loc), "admin": hive == "HKLM"})
 
     # 2) automatikus indítás nem létező programra
     for hive, path in RUN_KEYS:
@@ -130,7 +131,7 @@ def scan() -> list[dict]:
                 exe = command_executable(value) if isinstance(value, str) else None
                 if exe and _looks_absolute(exe) and not os.path.exists(exe):
                     issues.append({"type": "run", "hive": hive, "key": path, "value": name,
-                                   "title": f"Indítási bejegyzés hiányzó programra: {name}",
+                                   "title": t("Indítási bejegyzés hiányzó programra: {name}", name=name),
                                    "detail": exe, "admin": hive == "HKLM"})
 
     # 3) MUI-gyorsítótár: már nem létező programok nevei
@@ -142,8 +143,8 @@ def scan() -> list[dict]:
                      and _looks_absolute(n) and not os.path.exists(n.rsplit(".", 1)[0])]
         if stale:
             issues.append({"type": "mui", "hive": hive, "key": path, "value": None,
-                           "title": f"MUI-gyorsítótár: {len(stale)} elavult programnév",
-                           "detail": "Törölt programok megjelenítendő nevei", "admin": False})
+                           "title": t("MUI-gyorsítótár: {n} elavult programnév", n=len(stale)),
+                           "detail": t("Törölt programok megjelenítendő nevei"), "admin": False})
     except OSError:
         pass
     for i, it in enumerate(issues):
@@ -161,21 +162,21 @@ def backup_key(hive: str, key: str) -> str | None:
 
 def fix(issue: dict) -> tuple[bool, str]:
     if SYSTEM != "Windows":
-        return False, "Csak Windowson érhető el."
+        return False, t("Csak Windowson érhető el.")
     import winreg
     hive, key, typ = issue.get("hive"), issue.get("key", ""), issue.get("type")
     if hive not in ("HKLM", "HKCU") or typ not in ("uninstall", "run", "mui"):
-        return False, "Ismeretlen bejegyzés."
+        return False, t("Ismeretlen bejegyzés.")
     # csak a scan() által ismert kulcsokhoz nyúlunk
     allowed = {p for _h, p in UNINSTALL_KEYS} | {p for _h, p in RUN_KEYS} | {MUI_KEY[1]}
     parent = key.rsplit("\\", 1)[0] if typ == "uninstall" else key
     if parent not in allowed:
-        return False, "Nem engedélyezett kulcs."
+        return False, t("Nem engedélyezett kulcs.")
     if hive == "HKLM" and not winapi.is_admin():
-        return False, "Rendszergazdai jog szükséges."
+        return False, t("Rendszergazdai jog szükséges.")
     bk = backup_key(hive, key)
     if not bk:
-        return False, "A biztonsági mentés nem sikerült, ezért nem módosítottam semmit."
+        return False, t("A biztonsági mentés nem sikerült, ezért nem módosítottam semmit.")
     try:
         if typ == "uninstall":
             p, sub = key.rsplit("\\", 1)
@@ -193,7 +194,7 @@ def fix(issue: dict) -> tuple[bool, str]:
                     winreg.DeleteValue(k, n)
         return True, os.path.basename(bk)
     except OSError as e:
-        return False, f"Hiba: {e.strerror or e}"
+        return False, t("Hiba: {e}", e=e.strerror or e)
 
 
 def _delete_tree(parent, name):

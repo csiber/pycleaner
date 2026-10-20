@@ -6,27 +6,31 @@ from html import escape
 
 from . import __version__
 from .fsutil import fmt
+from .i18n import lang, t
 
-LABELS = {"temp": "Ideiglenes", "browser": "Böngésző", "thumbnails": "Bélyegképek", "crash": "Hibajelentések",
-          "logs": "Naplók", "winupdate": "Windows Update", "shader": "Shader", "trash": "Lomtár",
-          "custom": "Egyéni"}
+def _labels() -> dict:
+    return {"temp": t("Ideiglenes"), "browser": t("Böngésző"), "thumbnails": t("Bélyegképek"),
+            "crash": t("Hibajelentések"), "logs": t("Naplók"), "winupdate": "Windows Update", "shader": "Shader",
+            "trash": t("Lomtár"), "custom": t("Egyéni")}
 
 
 def build(history: list) -> str:
+    labels = _labels()
     total = sum(e.get("total_freed_bytes", 0) for e in history)
     files = sum(e.get("total_files", 0) for e in history)
     rows = "".join(
         "<tr><td>{ts}</td><td>{cats}</td><td class=n>{freed}</td><td class=n>{files}</td><td>{kind}</td></tr>".format(
             ts=escape(str(e.get("timestamp", ""))),
-            cats=escape(", ".join(LABELS.get(c, str(c)) for c in e.get("categories", []))),
+            cats=escape(", ".join(labels.get(c, str(c)) for c in e.get("categories", []))),
             freed=escape(str(e.get("total_freed", ""))),
             files=int(e.get("total_files", 0) or 0),
-            kind="Ütemezett" if e.get("auto") else "Kézi")
+            kind=t("Ütemezett") if e.get("auto") else t("Kézi"))
         for e in history[:200])
     now = datetime.now()
+    empty = f'<tr><td colspan=5 class=mut>{escape(t("Még nincs előzmény."))}</td></tr>'
     return f"""<!doctype html>
-<html lang="hu"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PyCleaner riport — {now:%Y-%m-%d}</title>
+<html lang="{lang()}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{t("PyCleaner riport")} — {now:%Y-%m-%d}</title>
 <style>
 :root{{color-scheme:light dark;--bg:#f6f7f9;--card:#fff;--tx:#1b1f24;--mut:#5b6573;--ln:#e3e6ea;--ac:#0b84b5}}
 @media (prefers-color-scheme:dark){{:root{{--bg:#111318;--card:#181b21;--tx:#e8eaed;--mut:#98a2b0;--ln:#262a33;--ac:#4cc3ee}}}}
@@ -39,10 +43,10 @@ table{{width:100%;border-collapse:collapse;background:var(--card);border:1px sol
 th,td{{text-align:left;padding:9px 12px;border-bottom:1px solid var(--ln)}} th{{font-size:12px;color:var(--mut);font-weight:600}}
 td.n{{text-align:right;font-variant-numeric:tabular-nums}} footer{{margin-top:24px;font-size:12px}}
 </style></head><body><main>
-<h1>PyCleaner — tisztítási riport</h1>
-<div class="mut">Készült: {now:%Y-%m-%d %H:%M} · {escape(platform.system())} {escape(platform.release())} · {escape(platform.node())}</div>
-<div class="stats"><div class="st"><b>{len(history)}</b>tisztítás</div><div class="st"><b>{fmt(total)}</b>felszabadítva összesen</div><div class="st"><b>{files}</b>törölt fájl</div></div>
-<table><thead><tr><th>Időpont</th><th>Kategóriák</th><th style="text-align:right">Felszabadítva</th><th style="text-align:right">Fájl</th><th>Mód</th></tr></thead>
-<tbody>{rows or '<tr><td colspan=5 class=mut>Még nincs előzmény.</td></tr>'}</tbody></table>
+<h1>{t("PyCleaner — tisztítási riport")}</h1>
+<div class="mut">{t("Készült")}: {now:%Y-%m-%d %H:%M} · {escape(platform.system())} {escape(platform.release())} · {escape(platform.node())}</div>
+<div class="stats"><div class="st"><b>{len(history)}</b>{t("tisztítás")}</div><div class="st"><b>{fmt(total)}</b>{t("felszabadítva összesen")}</div><div class="st"><b>{files}</b>{t("törölt fájl")}</div></div>
+<table><thead><tr><th>{t("Időpont")}</th><th>{t("Kategóriák")}</th><th style="text-align:right">{t("Felszabadítva")}</th><th style="text-align:right">{t("Fájl")}</th><th>{t("Mód")}</th></tr></thead>
+<tbody>{rows or empty}</tbody></table>
 <footer class="mut">PyCleaner {escape(__version__)} · github.com/csiber/pycleaner</footer>
 </main></body></html>"""

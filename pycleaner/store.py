@@ -26,6 +26,9 @@ DEFAULT_PROFILE = {
 
 DEFAULT_CONFIG = {
     "theme": "system",
+    "language": "auto",
+    "close_to_tray": False,
+    "service": {"name": "", "contact": "", "note": ""},
     "active_profile": "default",
     "check_updates": True,
     "profiles": {"default": copy.deepcopy(DEFAULT_PROFILE)},
@@ -33,6 +36,7 @@ DEFAULT_CONFIG = {
 
 DEFAULT_SCHEDULE = {
     "enabled": False,
+    "use_task": False,
     "interval_hours": 24,
     "categories": ["temp", "browser", "crash"],
     "last_run": None,
@@ -190,8 +194,15 @@ def set_option(key: str, value) -> None:
         cfg = load_config()
         if key == "theme" and value in ("system", "dark", "light"):
             cfg["theme"] = value
-        elif key == "check_updates":
-            cfg["check_updates"] = bool(value)
+        elif key in ("check_updates", "close_to_tray"):
+            cfg[key] = bool(value)
+        elif key == "language" and value in ("auto", "hu", "en"):
+            cfg["language"] = value
+            from . import i18n
+            i18n.set_lang(i18n.resolve(value))
+        elif key == "service" and isinstance(value, dict):
+            cfg["service"] = {"name": str(value.get("name", ""))[:80], "contact": str(value.get("contact", ""))[:300],
+                              "note": str(value.get("note", ""))[:1000]}
         save_config(cfg)
 
 
@@ -231,6 +242,8 @@ def save_schedule(s: dict) -> dict:
         cur = load_schedule()
         if "enabled" in s:
             cur["enabled"] = bool(s["enabled"])
+        if "use_task" in s:
+            cur["use_task"] = bool(s["use_task"])
         if "interval_hours" in s:
             try:
                 cur["interval_hours"] = max(1, min(24 * 30, int(s["interval_hours"])))

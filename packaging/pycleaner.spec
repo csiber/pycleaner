@@ -13,8 +13,9 @@ a = Analysis(
     pathex=[ROOT],
     datas=[(os.path.join(ROOT, "pycleaner", "templates"), "pycleaner/templates"),
            (os.path.join(ROOT, "pycleaner", "static"), "pycleaner/static")],
-    hiddenimports=["winreg", "send2trash", "webview.platforms.edgechromium", "webview.platforms.winforms"],
-    excludes=["tkinter", "matplotlib", "numpy", "PIL", "IPython", "pytest"],
+    hiddenimports=["winreg", "send2trash", "webview.platforms.edgechromium", "webview.platforms.winforms",
+                   "pystray._win32", "PIL.Image", "PIL.PngImagePlugin"],
+    excludes=["tkinter", "matplotlib", "numpy", "IPython", "pytest"],
     noarchive=False,
 )
 pyz = PYZ(a.pure)

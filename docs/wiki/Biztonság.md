@@ -17,6 +17,8 @@ A PyCleaner alapelve: **inkább hagyjon meg valamit, mint hogy olyat töröljön
 | Registry-javítás | Előtte `.reg` mentés készül a `%LOCALAPPDATA%\PyCleaner\registry-backups` mappába; a fájlra duplán kattintva visszaállítható. Ha a mentés nem sikerül, a program nem módosít. |
 | Gyorsítótár-tisztítás | Opcionális ZIP-mentés (Beállítások → *Mentés törlés előtt*). |
 | Alkalmazás eltávolítása | A Microsoft Store-ból visszatelepíthető. |
+| Indítópult-elem kikapcsolása | Semmi nem törlődik; visszakapcsolható a PyCleanerben vagy a Feladatkezelőben. |
+| Program eltávolítása utáni maradékok | Alapból nincsenek kijelölve; a kijelöltek a Lomtárba kerülnek. |
 | Bármi más | A Finomhangolás oldalon előtte készíts **visszaállítási pontot**. |
 
 Véglegesen csak a **Lomtár ürítése** és az **egyéni mappák** törlése töröl — mindkettő előtt megerősítést kér.
@@ -30,7 +32,8 @@ A felület egy beágyazott ablakban fut, amely a gépen futó, csak a `127.0.0.1
 - szigorú **Content-Security-Policy**: csak saját szkript, külső erőforrás nincs;
 - a fájltörlő végpont csak azokat az útvonalakat fogadja el, amelyeket a program előzőleg maga listázott ki;
 - a registry-javító végpont csak a legutóbbi keresés találatait ismeri, tetszőleges kulcsot nem;
-- az alkalmazás-eltávolító csak a beépített listán szereplő csomagneveket fogadja el.
+- az alkalmazás-eltávolító csak a beépített listán szereplő csomagneveket fogadja el;
+- az indítópult-kapcsoló, a programfrissítő és a program-eltávolító csak a legutóbbi listázás elemeit ismeri (azonosító alapján) — tetszőleges parancsot, csomagnevet vagy mappát nem fogad el; az eltávolítás utáni maradékok közül is csak a felkínáltak törölhetők.
 
 ## Profiljelszó
 

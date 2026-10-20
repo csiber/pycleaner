@@ -3,6 +3,7 @@
 import json
 
 from . import winapi
+from .i18n import t
 
 # (csomagnév, megjelenő név, alapból kijelölt?) — a játékokhoz/Xbox-fiókhoz szükséges
 # komponensek (Xbox Identity Provider, Gaming Services) szándékosan nincsenek a listán.
@@ -49,7 +50,7 @@ def installed_packages() -> set[str]:
 
 def app_list() -> list[dict]:
     inst = installed_packages()
-    return [{"id": pkg, "name": name, "default": default, "installed": pkg in inst}
+    return [{"id": pkg, "name": t(name), "default": default, "installed": pkg in inst}
             for pkg, name, default in APPS]
 
 
@@ -72,7 +73,7 @@ def remove_apps(ids: list[str]) -> list[dict]:
 
 def uninstall_onedrive() -> tuple[bool, str]:
     if not winapi.IS_WINDOWS:
-        return False, "Csak Windowson érhető el."
+        return False, t("Csak Windowson érhető el.")
     script = r"""
 Stop-Process -Name OneDrive -Force -ErrorAction SilentlyContinue
 $cands = @("$env:SystemRoot\System32\OneDriveSetup.exe", "$env:SystemRoot\SysWOW64\OneDriveSetup.exe")
@@ -89,7 +90,7 @@ else {
     r = winapi.powershell(script, timeout=300)
     out = r.stdout.strip()
     if "DONE" in out:
-        return True, "A OneDrive eltávolítása lefutott. A felhőben tárolt fájlok megmaradnak a OneDrive-fiókban."
+        return True, t("A OneDrive eltávolítása lefutott. A felhőben tárolt fájlok megmaradnak a OneDrive-fiókban.")
     if "NOTFOUND" in out:
-        return False, "Nem találtam OneDrive-telepítőt — lehet, hogy már nincs telepítve."
+        return False, t("Nem találtam OneDrive-telepítőt — lehet, hogy már nincs telepítve.")
     return False, (r.stderr.strip().splitlines() or ["Ismeretlen hiba."])[0]
