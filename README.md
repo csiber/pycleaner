@@ -91,7 +91,7 @@ Beállítások, előzmények, mentések és napló: `%LOCALAPPDATA%\PyCleaner`. 
 
 ## Állapot
 
-**5.0.0 — 2026-10-18:** teljes újraírás (lásd [CHANGELOG](CHANGELOG.md)). Tesztelve Windows 11 (26200) és Linux alatt; a CI Windows és Ubuntu alatt, Python 3.10 és 3.13 verzióval futtatja a teszteket.
+**5.0.1 — 2026-10-20:** javítókiadás (forrásból indítás hiányzó csomagokkal, Lomtár-biztonság); az 5.0.0 (10-18) teljes újraírás volt — lásd [CHANGELOG](CHANGELOG.md). Tesztelve Windows 11 (26200) és Linux alatt; a CI Windows és Ubuntu alatt, Python 3.10 és 3.13 verzióval futtatja a teszteket.
 
 Nyitott tételek:
 
