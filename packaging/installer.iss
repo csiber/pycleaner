@@ -21,9 +21,9 @@ AppUpdatesURL=https://github.com/csiber/pycleaner/releases
 DefaultDirName={autopf}\PyCleaner
 DefaultGroupName=PyCleaner
 DisableProgramGroupPage=yes
-; alapból a felhasználónak telepít (nem kell rendszergazda), de a varázsló felajánlja a gépszintűt
+; alapból a felhasználónak telepít (nem kell rendszergazda); a varázsló és a /ALLUSERS kapcsoló (winget) a gépszintűt is engedi
 PrivilegesRequired=lowest
-PrivilegesRequiredOverridesAllowed=dialog
+PrivilegesRequiredOverridesAllowed=commandline dialog
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 MinVersion=10.0

@@ -102,7 +102,7 @@ Beállítások, előzmények, mentések és napló: `%LOCALAPPDATA%\PyCleaner`. 
 Nyitott tételek:
 
 - [ ] Kódaláírás — a workflow kész rá (`.signpath/`), a SignPath Foundation jóváhagyására vár
-- [ ] Felvétel a winget-katalógusba (`winget install csiber.PyCleaner`)
+- [ ] Felvétel a winget-katalógusba (`winget install csiber.PyCleaner`) — [PR beküldve](https://github.com/microsoft/winget-pkgs/pull/456547), a Microsoft ellenőrzésére vár
 - [ ] A Gépállapot-riport közvetlen PDF-exportja (most: böngészőből nyomtatás / PDF)
 
 ## Licenc
