@@ -81,10 +81,23 @@ jobs:
             }
           }
           Get-Content $log -ErrorAction SilentlyContinue
+          # képernyőkép a natív ablakról (műtermékként letölthető) — a WebView2-megjelenítés ellenőrzéséhez
+          Start-Sleep -Seconds 4
+          Add-Type -AssemblyName System.Windows.Forms, System.Drawing
+          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen($b.Location, [System.Drawing.Point]::Empty, $b.Size)
+          New-Item -ItemType Directory screenshot -Force | Out-Null
+          $bmp.Save("$PWD\screenshot\native-window.png", [System.Drawing.Imaging.ImageFormat]::Png)
           Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue
           Remove-Item "$data\config.json" -ErrorAction SilentlyContinue
           if (-not $win) { throw "A natív ablak nem indult el." }
           if (-not $tray) { throw "A tálcaikon nem indult el." }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-window-screenshot
+          path: screenshot/
 
       - name: Füstteszt — ütemezett tisztítás ablak nélkül (--auto-clean)
         shell: pwsh
