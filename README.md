@@ -97,7 +97,7 @@ Beállítások, előzmények, mentések és napló: `%LOCALAPPDATA%\PyCleaner`. 
 
 ## Állapot
 
-**5.1.0 — 2026-10-20:** Gépállapot-felmérés és -riport, Indítópult, Programfrissítő (winget), Programok, Feladatütemező-integráció, tálcaikon, angol felület — lásd [CHANGELOG](CHANGELOG.md). Tesztelve Windows 11 (26200) és Linux alatt; a CI Windows és Ubuntu alatt, Python 3.10 és 3.13 verzióval futtatja a teszteket.
+**5.1.1 — 2026-10-20:** ikonjavítás (egyes gépeken üresek voltak). **5.1.0:** Gépállapot-felmérés és -riport, Indítópult, Programfrissítő (winget), Programok, Feladatütemező-integráció, tálcaikon, angol felület — lásd [CHANGELOG](CHANGELOG.md). Tesztelve Windows 11 (26200) és Linux alatt; a CI Windows és Ubuntu alatt, Python 3.10 és 3.13 verzióval futtatja a teszteket.
 
 Nyitott tételek:
 

@@ -2,7 +2,7 @@
 
 A formátum a [Keep a Changelog](https://keepachangelog.com/hu/1.1.0/) ajánlását követi, a verziózás [SemVer](https://semver.org/lang/hu/).
 
-## [Kiadatlan]
+## [5.1.1] — 2026-10-20
 
 ### Javítva
 - Egyes gépeken az ikonok nem jelentek meg (üres ikonhelyek). Az ikonkészlet mostantól a felületbe ágyazva töltődik, nem külön fájlból, és a program a fájltípusokat (MIME) a Windows registrytől függetlenül maga rögzíti.
